@@ -24,91 +24,68 @@ func (c *Con) Opendb() {
 	c.DB = db
 }
 
-//New ...
-func (c *Con) New() {
+//NewCon ...
+func NewCon() *Con {
+	var c = new(Con)
 	c.Opendb()
+	return c
 }
 
-//RR ...
-type RR struct {
-	ID    int    `db:"id"`
-	Title string `db:"title"`
-	Tik   int    `db:"tik"`
-	P     string `db:"p"`
+//El ...
+type El struct {
+	ID    int    `db:"id" json:"id"`
+	Title string `db:"title" json:"title"`
+	Tik   int    `db:"tik" json:"tik"`
+	P     string `db:"p" json:"p"`
+	Pid   int    `db:"pid" json:"pid"`
+	Child interface{}
 }
-
-// //List ...
-// func (c *Con) List(id, etype string) []RR {
-// 	c.Opendb()
-// 	var data = []RR{}
-// 	fmt.Println(c.DB)
-// 	fmt.Println("indb")
-// 	if etype == "list" {
-// 		// c.DB.Select(&data, "select id,title,tik,p from e where pid = '?' order by tik", id)
-// 		fmt.Println("list")
-// 		c.DB.Select(&data, "select id,title,tik,p from e")
-// 		fmt.Println(len(data))
-// 		for i := 0; i < len(data); i++ {
-// 			fmt.Println(i)
-// 			// fmt.Println(data[i].title)
-// 		}
-// 	} else {
-// 		fmt.Println("space")
-// 		c.DB.Select(&data, "select id,title,tik,p from e where p like '&?&' order by tik", id)
-// 		fmt.Println(len(data))
-// 		for i := 0; i < len(data); i++ {
-// 			fmt.Println(fmt.Sprintf("s+%b", i))
-// 			// fmt.Println(data[i].title)
-// 		}
-// 	}
-// 	return data
-// }
 
 //List a test
-func (c *Con) List(id, etype string) {
-	db, err := sqlx.Connect("sqlite3", "./db.db")
+func (c *Con) List(id, etype string) []El {
+	db := c.DB
+	var err error
+	var data = []El{}
+	if etype == "list" {
+		err = db.Select(&data, "select id,title,tik,p,pid from e where pid = ?", id)
+	} else {
+		err = db.Select(&data, "select id,title,tik,p,pid from e where p like '%'||$1||'%'", id)
+	}
+
 	if err != nil {
-		log.Fatal(err)
 		fmt.Println(err)
 	}
-	var data = []RR{}
-	err = db.Select(&data, "select id,title,tik,p from e")
+	return data
+}
+
+//Get select online from database on id
+func (c *Con) Get(id string) El {
+	db := c.DB
+	el := El{}
+	err := db.Get(&el, "select id,title,tik,p,pid from e where id = ?", id)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("%#v\n", data)
-	fmt.Println(len(data))
+	return el
 }
 
-// List1 ...
-func (c *Con) List1(id, etype string) {
-	db, err := sql.Open("sqlite3", "./db.db")
+//New create a new element
+func (c *Con) New(el El) (isdone bool, newid int64) {
+	isdone = true
+	db := c.DB
+	stmt, err := db.Prepare("insert into e (title,pid,p,tik) values(?,?,?,?)")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
-	stmt, _ := db.Prepare("select id,title,tik,p from e where pid = ?")
-	defer stmt.Close()
-	res := stmt.QueryRow("66")
-	var cc = new(RR)
-	res.Scan(&cc.ID, &cc.Title, &cc.Tik, &cc.P)
-	fmt.Println("res is:")
-	fmt.Println(cc.Title)
+	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik)
+	if er1 != nil {
+		fmt.Println(err)
+		isdone = false
+		return
+	}
+	newid, _ = res.LastInsertId()
+	return
 }
-
-// c.Opendb()
-// res, _ := c.DB.Query("select id,title,tik,p from e")
-// for res.Next() {
-// 	var title string
-// 	var tik int
-// 	var p string
-// 	res.Scan(&id, &title, &tik, &p)
-// 	fmt.Println("res is:")
-// 	fmt.Println(id)
-// 	fmt.Println(title)
-// 	fmt.Println(tik)
-// 	fmt.Println(p)
-// }
-// }
 
 func lite() {
 	os.Remove("./foo.db")

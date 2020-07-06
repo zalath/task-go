@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"tasktask/src/el"
 
 	"github.com/gin-gonic/gin"
@@ -13,18 +14,35 @@ func main() {
 			"message": "pong",
 		})
 	})
-	r.POST("/list", list)
-	r.POST("/list1", list1)
+	r.POST("/els", list)
+	r.POST("/el", getel)
+	r.POST("/new", new)
+	r.POST("/tik", tik)
+	r.POST("/save")
+	r.POST("/move")
+	r.POST("/space", space)
 	r.Run(":8888") // listen and serve on 0.0.0.0:8080
 }
 
 func list(c *gin.Context) {
 	id := c.PostForm("id")
-	etype := c.PostForm("type")
-	el.List(id, etype)
+	res := el.List(id, "list")
+	c.JSON(http.StatusOK, res)
 }
-func list1(c *gin.Context) {
+func space(c *gin.Context) {
 	id := c.PostForm("id")
-	etype := c.PostForm("type")
-	el.List1(id, etype)
+	res := el.List(id, "")
+	c.JSON(http.StatusOK, res)
+}
+func new(c *gin.Context) {
+	res := el.New(c)
+	c.JSON(http.StatusOK, res)
+}
+func getel(c *gin.Context) {
+	res := el.GetEl(c.PostForm("id"))
+	c.JSON(http.StatusOK, res)
+}
+func tik(c *gin.Context) {
+	res := el.Tik(c.PostForm("id"))
+	c.JSON(http.StatusOK, res)
 }

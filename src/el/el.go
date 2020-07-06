@@ -2,45 +2,89 @@ package el
 
 import (
 	"fmt"
-	sqlim "tasktask/src/sqlitem"
+	"strconv"
+	"tasktask/src/sqlitem"
+	dbt "tasktask/src/sqlitem"
+
+	"github.com/gin-gonic/gin"
 )
 
 //List return direct child of selected node
-func List(id, etype string) {
-	fmt.Println("inlist")
+func List(id, etype string) []dbt.El {
 	db := newdb()
-	db.List(id, etype)
+	data := db.List(id, etype)
+	idInt, _ := strconv.Atoi(id)
+	var res = loopFormChild(data, idInt)
+	return res
 }
 
-//List1 only a test
-func List1(id, etype string) {
-	fmt.Println("inlist")
-	db := newdb()
-	db.List1(id, etype)
-}
-
-//Space return all element with structure
-func Space(id, dtype string) {
-	// db := newdb()
+func loopFormChild(data []dbt.El, id int) []dbt.El {
+	var res = []dbt.El{}
+	for i := 0; i < len(data); i++ {
+		if data[i].Pid == id {
+			el := data[i]
+			el.Child = loopFormChild(data, el.ID)
+			res = append(res, el)
+		}
+	}
+	return res
 }
 
 //New create a new element into database
-func New() {
-	// db := newdb()
+func New(c *gin.Context) string {
+	db := newdb()
+	el := formEl(c, db)
+	res, _ := db.New(el)
+	result := "done"
+	if !res {
+		result = "mis"
+	}
+	return result
+}
+func formEl(c *gin.Context, db *dbt.Con) sqlitem.El {
+	var el = sqlitem.El{}
+	el.Title = c.PostForm("name")
+	el.Pid, _ = strconv.Atoi(c.PostForm("pid"))
+	if el.Pid == 0 {
+		el.P = ","
+	} else {
+		pel := db.Get(c.PostForm("pid"))
+		el.P = fmt.Sprintf("%s%s,", pel.P, c.PostForm("pid"))
+	}
+	el.Tik = 0
+	return el
 }
 
-//El display edit page
-func El(id string) {
+//GetEl ...
+func GetEl(id string) dbt.El {
+	db := newdb()
+	res := db.Get(id)
+	return res
+}
+
+//EltoEdit display edit page
+func EltoEdit(id string) {
 }
 
 //Save submit saving element
-func Save() {
-
+func Save() string {
+	return ""
 }
 
 //Tik change an element's state
-func Tik() {
-
+func Tik(id string) string {
+	db := newdb()
+	data := db.Get(id)
+	var tik int
+	switch data.Tik {
+	case 1:
+		tik = 2
+	case 2:
+		tik = 3
+	case 3:
+		tik = 1
+	}
+	return "done"
 }
 
 //Move change an element's pid and p
@@ -58,7 +102,7 @@ func RefreshCt() {
 
 }
 
-func newdb() *sqlim.Con {
-	db := new(sqlim.Con)
+func newdb() *dbt.Con {
+	db := dbt.NewCon()
 	return db
 }
