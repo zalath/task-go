@@ -18,8 +18,8 @@ func main() {
 	r.POST("/el", getel)
 	r.POST("/new", new)
 	r.POST("/tik", tik)
-	r.POST("/save")
-	r.POST("/move")
+	r.POST("/save", save)
+	r.POST("/move", move)
 	r.POST("/space", space)
 	r.Run(":8888") // listen and serve on 0.0.0.0:8080
 }
@@ -43,6 +43,14 @@ func getel(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 func tik(c *gin.Context) {
-	res := el.Tik(c.PostForm("id"))
+	res := el.Save(c.PostForm("id"), c.PostForm("tik"), "tik")
+	c.JSON(http.StatusOK, res)
+}
+func save(c *gin.Context) {
+	res := el.Save(c.PostForm("id"), c.PostForm("title"), "title")
+	c.JSON(http.StatusOK, res)
+}
+func move(c *gin.Context) {
+	res := el.Move(c.PostForm("id"), c.PostForm("npid"))
 	c.JSON(http.StatusOK, res)
 }

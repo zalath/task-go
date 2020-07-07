@@ -3,6 +3,7 @@ package el
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"tasktask/src/sqlitem"
 	dbt "tasktask/src/sqlitem"
 
@@ -14,7 +15,10 @@ func List(id, etype string) []dbt.El {
 	db := newdb()
 	data := db.List(id, etype)
 	idInt, _ := strconv.Atoi(id)
-	var res = loopFormChild(data, idInt)
+	if etype == "list" {
+		return data
+	}
+	res := loopFormChild(data, idInt)
 	return res
 }
 
@@ -52,6 +56,7 @@ func formEl(c *gin.Context, db *dbt.Con) sqlitem.El {
 		el.P = fmt.Sprintf("%s%s,", pel.P, c.PostForm("pid"))
 	}
 	el.Tik = 0
+	el.Ct = 0
 	return el
 }
 
@@ -67,41 +72,77 @@ func EltoEdit(id string) {
 }
 
 //Save submit saving element
-func Save() string {
-	return ""
-}
-
-//Tik change an element's state
-func Tik(id string) string {
+func Save(id, val, col string) string {
 	db := newdb()
-	data := db.Get(id)
-	var tik int
-	switch data.Tik {
-	case 1:
-		tik = 2
-	case 2:
-		tik = 3
-	case 3:
-		tik = 1
+	res := db.Update(id, val, col)
+	if res {
+		return "done"
 	}
-	return "done"
+	return "mis"
 }
 
 //Move change an element's pid and p
-func Move() {
+func Move(id, npid string) string {
+	db := newdb()
+	el := db.Get(id)
+	oldP := el.P
+	elp := db.Get(npid)
+	db.DB.Begin()
 
+	var sb strings.Builder
+	sb.WriteString(elp.P)
+	sb.WriteString(strconv.Itoa(elp.ID))
+	sb.WriteString(",")
+	newP := sb.String()
+
+	fmt.Println(oldP)
+	fmt.Println(npid)
+	fmt.Println(newP)
+	res := db.Update(id, npid, "pid")
+	if !res {
+		fmt.Println("pid update err")
+		db.DB.MustBegin().Rollback()
+		return "mis"
+	}
+	res = moveUpdateCt(el.Pid, "-", db)
+	if !res {
+		fmt.Println("old p - err")
+		db.DB.MustBegin().Rollback()
+		return "mis"
+	}
+	res = moveUpdateCt(elp.ID, "+", db)
+	if !res {
+		fmt.Println("new p + err")
+		db.DB.MustBegin().Rollback()
+		return "mis"
+	}
+
+	//update new pid's ct val
+	res = db.UpdateP(el.P, newP)
+	if !res {
+		fmt.Println("p update err")
+		db.DB.MustBegin().Rollback()
+		return "mis"
+	}
+	db.DB.MustBegin().Commit()
+	return "done"
 }
-
-//Ct get child node's count
-func Ct() {
-
+func moveUpdateCt(id int, ctype string, db *dbt.Con) bool {
+	cid := strconv.Itoa(id)
+	el := db.Get(cid)
+	if ctype == "+" {
+		res := db.Update(cid, strconv.Itoa(el.Ct+1), "ct")
+		if !res {
+			return false
+		}
+	} else if ctype == "-" {
+		res := db.Update(cid, strconv.Itoa(el.Ct-1), "ct")
+		if !res {
+			return false
+		}
+	}
+	return true
 }
-
-//RefreshCt refresh an element's ct count
-func RefreshCt() {
-
-}
-
 func newdb() *dbt.Con {
 	db := dbt.NewCon()
 	return db

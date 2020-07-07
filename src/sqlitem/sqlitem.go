@@ -1,10 +1,9 @@
 package sqlitem
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
-	"os"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3" //sqlite3
@@ -38,6 +37,7 @@ type El struct {
 	Tik   int    `db:"tik" json:"tik"`
 	P     string `db:"p" json:"p"`
 	Pid   int    `db:"pid" json:"pid"`
+	Ct    int    `db:"ct" json:"ct"`
 	Child interface{}
 }
 
@@ -47,9 +47,9 @@ func (c *Con) List(id, etype string) []El {
 	var err error
 	var data = []El{}
 	if etype == "list" {
-		err = db.Select(&data, "select id,title,tik,p,pid from e where pid = ?", id)
+		err = db.Select(&data, "select id,title,tik,p,pid,ct from e where pid = ?", id)
 	} else {
-		err = db.Select(&data, "select id,title,tik,p,pid from e where p like '%'||$1||'%'", id)
+		err = db.Select(&data, "select id,title,tik,p,pid,ct from e where p like '%'||$1||'%'", id)
 	}
 
 	if err != nil {
@@ -62,7 +62,7 @@ func (c *Con) List(id, etype string) []El {
 func (c *Con) Get(id string) El {
 	db := c.DB
 	el := El{}
-	err := db.Get(&el, "select id,title,tik,p,pid from e where id = ?", id)
+	err := db.Get(&el, "select id,title,tik,p,pid,ct from e where id = ?", id)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -87,99 +87,44 @@ func (c *Con) New(el El) (isdone bool, newid int64) {
 	return
 }
 
-func lite() {
-	os.Remove("./foo.db")
+//Update ...
+func (c *Con) Update(id, val, col string) (isdone bool) {
+	fmt.Println("update el :", id, col, val)
+	isdone = true
+	db := c.DB
 
-	db, err := sql.Open("sqlite3", "./foo.db")
+	var sb strings.Builder
+	sb.WriteString("update e set ")
+	sb.WriteString(col)
+	sb.WriteString("=? where id=?")
+
+	stmt, err := db.Prepare(sb.String())
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
-	defer db.Close()
-
-	sqlStmt := `
-	create table foo (id integer not null primary key, name text);
-	delete from foo;
-	`
-	_, err = db.Exec(sqlStmt)
-	if err != nil {
-		log.Printf("%q: %s\n", err, sqlStmt)
+	_, er1 := stmt.Exec(val, id)
+	if er1 != nil {
+		fmt.Println(er1)
+		isdone = false
 		return
 	}
+	return
+}
 
-	tx, err := db.Begin()
+//UpdateP ...
+func (c *Con) UpdateP(p, np string) (isdone bool) {
+	fmt.Println("update p:", p, np)
+	isdone = true
+	db := c.DB
+	stmt, err := db.Prepare("update e set `p` = replace(`p`,?,?) where `p` like '%'||?||'%'")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
-	stmt, err := tx.Prepare("insert into foo(id, name) values(?, ?)")
-	if err != nil {
-		log.Fatal(err)
+	_, er1 := stmt.Exec(p, np, p)
+	if er1 != nil {
+		fmt.Println(err)
+		isdone = false
+		return
 	}
-	defer stmt.Close()
-	for i := 0; i < 100; i++ {
-		_, err = stmt.Exec(i, fmt.Sprintf("こんにちわ世界%03d", i))
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	tx.Commit()
-
-	rows, err := db.Query("select id, name from foo")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var id int
-		var name string
-		err = rows.Scan(&id, &name)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(id, name)
-	}
-	err = rows.Err()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	stmt, err = db.Prepare("select name from foo where id = ?")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer stmt.Close()
-	var name string
-	err = stmt.QueryRow("3").Scan(&name)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(name)
-
-	// _, err = db.Exec("delete from foo")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	_, err = db.Exec("insert into foo(id, name) values(1, 'foo'), (2, 'bar'), (3, 'baz')")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	rows, err = db.Query("select id, name from foo")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var id int
-		var name string
-		err = rows.Scan(&id, &name)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(id, name)
-	}
-	err = rows.Err()
-	if err != nil {
-		log.Fatal(err)
-	}
+	return
 }
