@@ -53,7 +53,7 @@ func (c *Con) List(id, etype string) []El {
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		c.haveErr(err)
 	}
 	return data
 }
@@ -64,7 +64,7 @@ func (c *Con) Get(id string) El {
 	el := El{}
 	err := db.Get(&el, "select id,title,tik,p,pid,ct from e where id = ?", id)
 	if err != nil {
-		fmt.Println(err)
+		c.haveErr(err)
 	}
 	return el
 }
@@ -75,11 +75,11 @@ func (c *Con) New(el El) (isdone bool, newid int64) {
 	db := c.DB
 	stmt, err := db.Prepare("insert into e (title,pid,p,tik) values(?,?,?,?)")
 	if err != nil {
-		fmt.Println(err)
+		c.haveErr(err)
 	}
 	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik)
 	if er1 != nil {
-		fmt.Println(err)
+		c.haveErr(err)
 		isdone = false
 		return
 	}
@@ -100,11 +100,11 @@ func (c *Con) Update(id, val, col string) (isdone bool) {
 
 	stmt, err := db.Prepare(sb.String())
 	if err != nil {
-		fmt.Println(err)
+		c.haveErr(err)
 	}
 	_, er1 := stmt.Exec(val, id)
 	if er1 != nil {
-		fmt.Println(er1)
+		c.haveErr(er1)
 		isdone = false
 		return
 	}
@@ -118,13 +118,37 @@ func (c *Con) UpdateP(p, np string) (isdone bool) {
 	db := c.DB
 	stmt, err := db.Prepare("update e set `p` = replace(`p`,?,?) where `p` like '%'||?||'%'")
 	if err != nil {
-		fmt.Println(err)
+		c.haveErr(err)
 	}
 	_, er1 := stmt.Exec(p, np, p)
 	if er1 != nil {
-		fmt.Println(err)
+		c.haveErr(er1)
 		isdone = false
 		return
 	}
 	return
+}
+
+func (c *Con) haveErr(err error) {
+	if err.Error() == "no such table: e" {
+		db := c.DB
+		sql := `CREATE TABLE "e" (
+			"id"  INTEGER NOT NULL,
+			"title"  TEXT NOT NULL,
+			"tik"  INTEGER NOT NULL,
+			"pid"  INTEGER NOT NULL,
+			"p"  TEXT,
+			"ct"  INTEGER NOT NULL DEFAULT 0,
+			PRIMARY KEY ("id" ASC)
+			);
+			
+			`
+		_, err := db.Exec(sql)
+		if err != nil {
+			log.Fatal("database error")
+			return
+		}
+	} else {
+		fmt.Println(err)
+	}
 }
