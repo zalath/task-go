@@ -1,27 +1,30 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"tasktask/src/el"
+	"tasktask/src/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	r := gin.Default()
+	r.Use(middleware.Cors())
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
-	r.POST("/els", list)
+	r.POST("/list", list) //get a list of els
 	r.POST("/el", getel)
 	r.POST("/new", new)
 	r.POST("/tik", tik)
 	r.POST("/save", save)
 	r.POST("/move", move)
-	r.POST("/space", space)
-	r.Run(":8888") // listen and serve on 0.0.0.0:8080
+	r.POST("/space", space) // get a formed tree of els
+	r.Run(":8888")          // listen and serve on 0.0.0.0:8888
 }
 
 func list(c *gin.Context) {
@@ -31,6 +34,7 @@ func list(c *gin.Context) {
 }
 func space(c *gin.Context) {
 	id := c.PostForm("id")
+	fmt.Println(id)
 	res := el.List(id, "")
 	c.JSON(http.StatusOK, res)
 }
