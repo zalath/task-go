@@ -49,6 +49,9 @@ func (c *Con) List(id, etype string) []El {
 	if etype == "list" {
 		err = db.Select(&data, "select id,title,tik,p,pid,ct from e where pid = ?", id)
 	} else {
+		if id == "0" {
+			id = ","
+		}
 		err = db.Select(&data, "select id,title,tik,p,pid,ct from e where p like '%'||$1||'%'", id)
 	}
 
