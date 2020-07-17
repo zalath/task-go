@@ -44,10 +44,11 @@ func New(c *gin.Context) (result string) {
 	if !res {
 		db.DB.MustBegin().Rollback()
 		result = "mis"
-	}
-	if !updateCt(el.Pid, "+", db) {
-		db.DB.MustBegin().Rollback()
-		result = "mis"
+	} else {
+		if !updateCt(el.Pid, "+", db) {
+			db.DB.MustBegin().Rollback()
+			result = "mis"
+		}
 	}
 	db.DB.MustBegin().Commit()
 	result = "done"
@@ -57,10 +58,20 @@ func New(c *gin.Context) (result string) {
 //Del delete el from db
 func Del(id string) (result string) {
 	db := newdb()
+	db.DB.Begin()
+	el := GetEl(id)
 	res := db.Del(id)
 	if !res {
+		db.DB.MustBegin().Rollback()
 		result = "mis"
+	} else {
+		if !updateCt(el.Pid, "-", db) {
+			db.DB.MustBegin().Rollback()
+			result = "mis"
+		}
 	}
+
+	db.DB.MustBegin().Commit()
 	result = "done"
 	return
 }
