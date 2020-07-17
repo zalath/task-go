@@ -35,16 +35,36 @@ func loopFormChild(data []dbt.El, id int) []dbt.El {
 }
 
 //New create a new element into database
-func New(c *gin.Context) string {
+func New(c *gin.Context) (result string) {
 	db := newdb()
 	el := formEl(c, db)
-	res, _ := db.New(el)
-	result := "done"
+	db.DB.Begin()
+	res, newid := db.New(el)
+	result = strconv.Itoa(int(newid))
+	if !res {
+		db.DB.MustBegin().Rollback()
+		result = "mis"
+	}
+	if !updateCt(el.Pid, "+", db) {
+		db.DB.MustBegin().Rollback()
+		result = "mis"
+	}
+	db.DB.MustBegin().Commit()
+	result = "done"
+	return
+}
+
+//Del delete el from db
+func Del(id string) (result string) {
+	db := newdb()
+	res := db.Del(id)
 	if !res {
 		result = "mis"
 	}
-	return result
+	result = "done"
+	return
 }
+
 func formEl(c *gin.Context, db *dbt.Con) sqlitem.El {
 	var el = sqlitem.El{}
 	el.Title = c.PostForm("title")
@@ -65,10 +85,6 @@ func GetEl(id string) dbt.El {
 	db := newdb()
 	res := db.Get(id)
 	return res
-}
-
-//EltoEdit display edit page
-func EltoEdit(id string) {
 }
 
 //Save submit saving element
@@ -104,13 +120,13 @@ func Move(id, npid string) string {
 		db.DB.MustBegin().Rollback()
 		return "mis"
 	}
-	res = moveUpdateCt(el.Pid, "-", db)
+	res = updateCt(el.Pid, "-", db)
 	if !res {
 		fmt.Println("old p - err")
 		db.DB.MustBegin().Rollback()
 		return "mis"
 	}
-	res = moveUpdateCt(elp.ID, "+", db)
+	res = updateCt(elp.ID, "+", db)
 	if !res {
 		fmt.Println("new p + err")
 		db.DB.MustBegin().Rollback()
@@ -127,7 +143,7 @@ func Move(id, npid string) string {
 	db.DB.MustBegin().Commit()
 	return "done"
 }
-func moveUpdateCt(id int, ctype string, db *dbt.Con) bool {
+func updateCt(id int, ctype string, db *dbt.Con) bool {
 	cid := strconv.Itoa(id)
 	el := db.Get(cid)
 	if ctype == "+" {

@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	r.Use(middleware.Cors())
 	r.GET("/ping", func(c *gin.Context) {
@@ -24,6 +25,7 @@ func main() {
 	r.POST("/save", save)
 	r.POST("/move", move)
 	r.POST("/space", space) // get a formed tree of els
+	r.POST("/del", del)
 	r.Run(":8888")          // listen and serve on 0.0.0.0:8888
 }
 
@@ -56,5 +58,9 @@ func save(c *gin.Context) {
 }
 func move(c *gin.Context) {
 	res := el.Move(c.PostForm("id"), c.PostForm("npid"))
+	c.JSON(http.StatusOK, res)
+}
+func del(c *gin.Context) {
+	res := el.Del(c.PostForm("id"))
 	c.JSON(http.StatusOK, res)
 }

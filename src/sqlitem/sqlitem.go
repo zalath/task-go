@@ -90,6 +90,25 @@ func (c *Con) New(el El) (isdone bool, newid int64) {
 	return
 }
 
+//Del delete an element
+func (c *Con) Del(id string) (isdone bool) {
+	isdone = true
+	db := c.DB
+	_, err := db.Exec("delete from e where p like '%'||$1||'%'", id)
+	if err != nil {
+		c.haveErr(err)
+		isdone = false
+		return
+	}
+	_, er1 := db.Exec("delete from e where id=$1", id)
+	if er1 != nil {
+		c.haveErr(err)
+		isdone = false
+		return
+	}
+	return
+}
+
 //Update ...
 func (c *Con) Update(id, val, col string) (isdone bool) {
 	fmt.Println("update el :", id, col, val)
