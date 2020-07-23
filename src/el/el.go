@@ -51,7 +51,6 @@ func New(c *gin.Context) (result string) {
 		}
 	}
 	db.DB.MustBegin().Commit()
-	result = "done"
 	return
 }
 
