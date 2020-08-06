@@ -1,6 +1,7 @@
 package sqlitem
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -134,15 +135,27 @@ func (c *Con) Update(id, val, col string) (isdone bool) {
 }
 
 //UpdateP ...
-func (c *Con) UpdateP(p, np string) (isdone bool) {
+func (c *Con) UpdateP(p, np, id string) (isdone bool) {
 	fmt.Println("update p:", p, np)
 	isdone = true
 	db := c.DB
-	stmt, err := db.Prepare("update e set `p` = replace(`p`,?,?) where `p` like '%'||?||'%'")
+	var stmt *sql.Stmt
+	var err error
+	if p == "," {
+		stmt, err = db.Prepare("update e set `p` = replace(`p`,?,?) where `id`=?")
+	} else {
+		stmt, err = db.Prepare("update e set `p` = replace(`p`,?,?) where `p` like '%'||?||'%'")
+	}
 	if err != nil {
 		c.haveErr(err)
 	}
-	_, er1 := stmt.Exec(p, np, p)
+	var er1 error
+	if p == "," {
+		_, er1 = stmt.Exec(p, np, id)
+	} else {
+		_, er1 = stmt.Exec(p, np, p)
+	}
+
 	if er1 != nil {
 		c.haveErr(er1)
 		isdone = false

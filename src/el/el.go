@@ -144,7 +144,7 @@ func Move(id, npid string) string {
 	}
 
 	//update new pid's ct val
-	res = db.UpdateP(el.P, newP)
+	res = db.UpdateP(el.P, newP, id)
 	if !res {
 		fmt.Println("p update err")
 		db.DB.MustBegin().Rollback()

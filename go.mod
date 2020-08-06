@@ -12,5 +12,5 @@ require (
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mattn/go-sqlite3 v1.14.0
 	github.com/pelletier/go-toml v1.8.0 // indirect
-	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
+	golang.org/x/sys v0.0.0-20200805065543-0cf7623e9dbd // indirect
 )
