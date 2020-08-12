@@ -33,13 +33,15 @@ func NewCon() *Con {
 
 //El ...
 type El struct {
-	ID    int    `db:"id" json:"id"`
-	Title string `db:"title" json:"title"`
-	Tik   int    `db:"tik" json:"tik"`
-	P     string `db:"p" json:"p"`
-	Pid   int    `db:"pid" json:"pid"`
-	Ct    int    `db:"ct" json:"ct"`
-	Child interface{}
+	ID        int    `db:"id" json:"id"`
+	Title     string `db:"title" json:"title"`
+	Tik       int    `db:"tik" json:"tik"`
+	P         string `db:"p" json:"p"`
+	Pid       int    `db:"pid" json:"pid"`
+	Ct        int    `db:"ct" json:"ct"`
+	Begintime string `db:"begintime" json:"begintime"`
+	Endtime   string `db:"endtime" json:"endtime"`
+	Child     interface{}
 }
 
 //List a test
@@ -48,12 +50,12 @@ func (c *Con) List(id, etype string) []El {
 	var err error
 	var data = []El{}
 	if etype == "list" {
-		err = db.Select(&data, "select id,title,tik,p,pid,ct from e where pid = ?", id)
+		err = db.Select(&data, "select id,title,tik,p,pid,ct from e where pid = ? order by tik,id", id)
 	} else {
 		if id == "0" {
 			id = ","
 		}
-		err = db.Select(&data, "select id,title,tik,p,pid,ct from e where p like '%'||$1||'%'", id)
+		err = db.Select(&data, "select id,title,tik,p,pid,ct from e where p like '%'||$1||'%' order by tik,id", id)
 	}
 
 	if err != nil {
@@ -77,11 +79,11 @@ func (c *Con) Get(id string) El {
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
-	stmt, err := db.Prepare("insert into e (title,pid,p,tik) values(?,?,?,?)")
+	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime) values(?,?,?,?,?)")
 	if err != nil {
 		c.haveErr(err)
 	}
-	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik)
+	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik, el.Begintime)
 	if er1 != nil {
 		c.haveErr(err)
 		isdone = false

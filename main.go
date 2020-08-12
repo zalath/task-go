@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"tasktask/src/el"
 	"tasktask/src/middleware"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +27,7 @@ func main() {
 	r.POST("/move", move)
 	r.POST("/space", space) // get a formed tree of els
 	r.POST("/del", del)
-	r.Run(":8888")          // listen and serve on 0.0.0.0:8888
+	r.Run(":8888") // listen and serve on 0.0.0.0:8888
 }
 
 func list(c *gin.Context) {
@@ -50,6 +51,11 @@ func getel(c *gin.Context) {
 }
 func tik(c *gin.Context) {
 	res := el.Save(c.PostForm("id"), c.PostForm("tik"), "tik")
+	if c.PostForm("tik") == "2" {
+		el.Save(c.PostForm("id"), time.Now().Format("2006-1-2 15:04:05"), "endtime")
+	} else {
+		el.Save(c.PostForm("id"), "", "endtime")
+	}
 	c.JSON(http.StatusOK, res)
 }
 func save(c *gin.Context) {
