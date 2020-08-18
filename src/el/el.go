@@ -79,6 +79,7 @@ func Del(id string) (result string) {
 func formEl(c *gin.Context, db *dbt.Con) sqlitem.El {
 	var el = sqlitem.El{}
 	el.Title = c.PostForm("title")
+	el.Cmt = c.PostForm("cmt")
 	el.Pid, _ = strconv.Atoi(c.PostForm("pid"))
 	if el.Pid == 0 {
 		el.P = ","

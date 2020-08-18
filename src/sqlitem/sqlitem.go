@@ -41,6 +41,7 @@ type El struct {
 	Ct        int    `db:"ct" json:"ct"`
 	Begintime string `db:"begintime" json:"begintime"`
 	Endtime   string `db:"endtime" json:"endtime"`
+	Cmt       string `db:"cmd" json:"cmt"`
 	Child     interface{}
 }
 
@@ -79,11 +80,11 @@ func (c *Con) Get(id string) El {
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
-	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime) values(?,?,?,?,?)")
+	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime,cmt) values(?,?,?,?,?,?)")
 	if err != nil {
 		c.haveErr(err)
 	}
-	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik, el.Begintime)
+	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik, el.Begintime, el.Cmt)
 	if er1 != nil {
 		c.haveErr(err)
 		isdone = false

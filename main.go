@@ -60,6 +60,9 @@ func tik(c *gin.Context) {
 }
 func save(c *gin.Context) {
 	res := el.Save(c.PostForm("id"), c.PostForm("title"), "title")
+	if res == "done" {
+		res = el.Save(c.PostForm("id"), c.PostForm("cmt"), "cmt")
+	}
 	c.JSON(http.StatusOK, res)
 }
 func move(c *gin.Context) {
