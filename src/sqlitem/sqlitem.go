@@ -41,7 +41,7 @@ type El struct {
 	Ct        int    `db:"ct" json:"ct"`
 	Begintime string `db:"begintime" json:"begintime"`
 	Endtime   string `db:"endtime" json:"endtime"`
-	Cmt       string `db:"cmd" json:"cmt"`
+	Cmt       string `db:"cmt" json:"cmt"`
 	Child     interface{}
 }
 
@@ -51,12 +51,14 @@ func (c *Con) List(id, etype string) []El {
 	var err error
 	var data = []El{}
 	if etype == "list" {
-		err = db.Select(&data, "select id,title,tik,p,pid,ct from e where pid = ? order by tik,id", id)
+		// err = db.Select(&data, "select id,title,tik,p,pid,ct,cmt,begintime,endtime from e where pid = ? order by tik,id", id)
+		err = db.Select(&data, "select * from e where pid = ? order by tik,id", id)
 	} else {
 		if id == "0" {
 			id = ","
 		}
-		err = db.Select(&data, "select id,title,tik,p,pid,ct from e where p like '%'||$1||'%' order by tik,id", id)
+		// err = db.Select(&data, "select id,title,tik,p,pid,ct,cmt,begintime,endtime from e where p like '%'||$1||'%' order by tik,id", id)
+		err = db.Select(&data, "select * from e where p like '%'||$1||'%' order by tik,id", id)
 	}
 
 	if err != nil {

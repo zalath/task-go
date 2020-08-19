@@ -90,6 +90,7 @@ func formEl(c *gin.Context, db *dbt.Con) sqlitem.El {
 	el.Tik = 1
 	el.Ct = 0
 	el.Begintime = time.Now().Format("2006-1-2 15:04:05")
+	el.Endtime = ""
 	return el
 }
 
