@@ -82,11 +82,11 @@ func (c *Con) Get(id string) El {
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
-	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime,cmt) values(?,?,?,?,?,?)")
+	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime,endtime,cmt) values(?,?,?,?,?,?,?)")
 	if err != nil {
 		c.haveErr(err)
 	}
-	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik, el.Begintime, el.Cmt)
+	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik, el.Begintime, el.Endtime, el.Cmt)
 	if er1 != nil {
 		c.haveErr(err)
 		isdone = false
@@ -179,6 +179,9 @@ func (c *Con) haveErr(err error) {
 			"pid"  INTEGER NOT NULL,
 			"p"  TEXT,
 			"ct"  INTEGER NOT NULL DEFAULT 0,
+			"begintime" TEXT,
+			"endtime" TEXT,
+			"cmt" TEXT,
 			PRIMARY KEY ("id" ASC)
 			);
 			
