@@ -71,7 +71,7 @@ func (c *Con) List(id, etype string) []El {
 func (c *Con) Get(id string) El {
 	db := c.DB
 	el := El{}
-	err := db.Get(&el, "select id,title,tik,p,pid,ct from e where id = ?", id)
+	err := db.Get(&el, "select id,title,tik,p,pid,ct,cmt from e where id = ?", id)
 	if err != nil {
 		c.haveErr(err)
 	}

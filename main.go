@@ -27,7 +27,7 @@ func main() {
 	r.POST("/move", move)
 	r.POST("/space", space) // get a formed tree of els
 	r.POST("/del", del)
-	r.Run(":8888") // listen and serve on 0.0.0.0:8888
+	r.Run(":10488") // listen and serve on 0.0.0.0:8888
 }
 
 func list(c *gin.Context) {
