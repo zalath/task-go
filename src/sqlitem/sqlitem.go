@@ -42,7 +42,12 @@ type El struct {
 	Begintime string `db:"begintime" json:"begintime"`
 	Endtime   string `db:"endtime" json:"endtime"`
 	Cmt       string `db:"cmt" json:"cmt"`
+	Tikc	  []Tikc	`json:"tikc"`
 	Child     interface{}
+}
+type Tikc struct {
+	Tik int `db:"tik" json:"tik"`
+	C int `db:"c" json:"c"`
 }
 
 //List a test
@@ -60,11 +65,24 @@ func (c *Con) List(id, etype string) []El {
 		// err = db.Select(&data, "select id,title,tik,p,pid,ct,cmt,begintime,endtime from e where p like '%'||$1||'%' order by tik,id", id)
 		err = db.Select(&data, "select * from e where p like '%'||$1||'%' order by tik asc,id desc", id)
 	}
-
+	for i := 0; i < len(data); i++ {
+		data[i].Tikc  = c.Count(data[i].ID)
+	}
 	if err != nil {
 		c.haveErr(err)
 	}
 	return data
+}
+
+//Get countings for one line
+func (c *Con) Count(id int) []Tikc {
+	db := c.DB
+	var d = []Tikc{}
+	err := db.Select(&d, "select tik,sum(1) as c from e where pid = ? group by tik order by tik", id)
+	if err != nil {
+		c.haveErr(err)
+	}
+	return d
 }
 
 //Get select online from database on id

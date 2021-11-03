@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"tasktask/src/sqlitem"
 	dbt "tasktask/src/sqlitem"
 	"time"
 
@@ -76,8 +75,8 @@ func Del(id string) (result string) {
 	return
 }
 
-func formEl(c *gin.Context, db *dbt.Con) sqlitem.El {
-	var el = sqlitem.El{}
+func formEl(c *gin.Context, db *dbt.Con) dbt.El {
+	var el = dbt.El{}
 	el.Title = c.PostForm("title")
 	el.Cmt = c.PostForm("cmt")
 	el.Pid, _ = strconv.Atoi(c.PostForm("pid"))
