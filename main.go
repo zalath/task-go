@@ -32,13 +32,14 @@ func main() {
 
 func list(c *gin.Context) {
 	id := c.PostForm("id")
-	res := el.List(id, "list")
+	tik := c.PostForm("tik")
+	res := el.List(id, "list", tik)
 	c.JSON(http.StatusOK, res)
 }
 func space(c *gin.Context) {
 	id := c.PostForm("id")
-	fmt.Println(id)
-	res := el.List(id, "")
+	tik := c.PostForm("tik")
+	res := el.List(id, "", tik)
 	c.JSON(http.StatusOK, res)
 }
 func new(c *gin.Context) {

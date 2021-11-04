@@ -51,19 +51,21 @@ type Tikc struct {
 }
 
 //List a test
-func (c *Con) List(id, etype string) []El {
+func (c *Con) List(id, etype, tik string) []El {
 	db := c.DB
 	var err error
 	var data = []El{}
+	var where = ""
+	if tik != "" {
+		where = " and tik = " + tik
+	}	
 	if etype == "list" {
-		// err = db.Select(&data, "select id,title,tik,p,pid,ct,cmt,begintime,endtime from e where pid = ? order by tik,id", id)
-		err = db.Select(&data, "select * from e where pid = ? order by tik asc,id desc", id)
+		err = db.Select(&data, "select * from e where pid = ? " + where + " order by tik asc,id desc", id)
 	} else {
 		if id == "0" {
 			id = ","
 		}
-		// err = db.Select(&data, "select id,title,tik,p,pid,ct,cmt,begintime,endtime from e where p like '%'||$1||'%' order by tik,id", id)
-		err = db.Select(&data, "select * from e where p like '%'||$1||'%' order by tik asc,id desc", id)
+		err = db.Select(&data, "select * from e where p like '%'||$1||'%' " + where + "  order by tik asc,id desc", id)
 	}
 	for i := 0; i < len(data); i++ {
 		data[i].Tikc  = c.Count(data[i].ID)

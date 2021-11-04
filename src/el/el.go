@@ -11,9 +11,9 @@ import (
 )
 
 //List return direct child of selected node
-func List(id, etype string) []dbt.El {
+func List(id, etype, tik string) []dbt.El {
 	db := newdb()
-	data := db.List(id, etype)
+	data := db.List(id, etype, tik)
 	idInt, _ := strconv.Atoi(id)
 	if etype == "list" {
 		return data
