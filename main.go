@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"tasktask/src/el"
 	"tasktask/src/middleware"
+	"tasktask/src/buy"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,16 @@ func main() {
 			"message": "pong",
 		})
 	})
+	r.POST("/bList", bList)
+	r.POST("/bBuy", bBuy)
+	r.POST("/bClas", bClas)
+	r.POST("/bDel", bDel)
+	r.POST("/bNewClas", bNewClas)
+	r.POST("/bDelClas", bDelClas)
+	r.POST("/bSumMonth", bSumMonth)
+	r.POST("/bSumType", bSumType)
+	r.POST("/bCsv",bCsv)
+
 	r.POST("/list", list) //get a list of els
 	r.POST("/el", getel)
 	r.POST("/new", new)
@@ -27,7 +38,44 @@ func main() {
 	r.POST("/move", move)
 	r.POST("/space", space) // get a formed tree of els
 	r.POST("/del", del)
+	fmt.Printf("running");
 	r.Run(":10488") // listen and serve on 0.0.0.0:8888
+}
+func bList(c *gin.Context) {
+	res := buy.List(c.PostForm("t"),c.PostForm("page"))
+	c.JSON(http.StatusOK, res)
+}
+func bBuy(c *gin.Context) {
+	res := buy.Buy(c)
+	c.JSON(http.StatusOK, res)
+}
+func bClas(c *gin.Context) {
+	res := buy.Clas()
+	c.JSON(http.StatusOK, res)
+}
+func bDel(c *gin.Context) {
+	res := buy.Del(c.PostForm("id"))
+	c.JSON(http.StatusOK, res)
+}
+func bNewClas(c *gin.Context) {
+	res := buy.NewClas(c)
+	c.JSON(http.StatusOK, res)
+}
+func bDelClas(c *gin.Context) {
+	res := buy.DelClas(c.PostForm("id"))
+	c.JSON(http.StatusOK, res)
+}
+func bSumMonth(c *gin.Context) {
+	res := buy.Sum(c.PostForm("month"),c.PostForm("typeid"),"month")
+	c.JSON(http.StatusOK, res)
+}
+func bSumType(c *gin.Context) {
+	res := buy.Sum(c.PostForm("month"), c.PostForm("typeid"),"type")
+	c.JSON(http.StatusOK, res)
+}
+func bCsv(c *gin.Context) {
+	res := buy.Csv("wx")
+	c.JSON(http.StatusOK, res)
 }
 
 func list(c *gin.Context) {

@@ -105,10 +105,12 @@ func (c *Con) New(el El) (isdone bool, newid int64) {
 	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime,endtime,cmt) values(?,?,?,?,?,?,?)")
 	if err != nil {
 		c.haveErr(err)
+		isdone = false
+		return
 	}
 	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik, el.Begintime, el.Endtime, el.Cmt)
 	if er1 != nil {
-		c.haveErr(err)
+		c.haveErr(er1)
 		isdone = false
 		return
 	}
