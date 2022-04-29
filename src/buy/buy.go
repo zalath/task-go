@@ -101,6 +101,8 @@ func formBuy(c *gin.Context, db *dbb.Con) dbb.Buy {
 	bu.Account = c.PostForm("account")
 	bu.Order = c.PostForm("order")
 	bu.Morder = c.PostForm("morder")
+	bu.Ttype = c.PostForm("ttype")
+	bu.Innout = c.PostForm("innout")
 	fmt.Println("buy structure formed")
 	return bu
 }

@@ -1,13 +1,13 @@
 package sqliteb
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
 	"strconv"
-
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3" //sqlite3
+	// _ "github.com/mattn/go-sqlite3" //sqlite3
 )
 
 /*Con ...*/
@@ -37,6 +37,7 @@ type Buy struct {
 	T		  string `db:"t" json:"t"`
 	Money	  float64 `db:"money" json:"money"`
 	Type	  string `db:"type" json:"type"`
+	Ttype	  string `db:"ttype" json:"ttype"`
 	Ex		  string `db:"ex" json:"ex"`
 	Merchant  string `db:"merchant" json:"merchant"`
 	Thing     string `db:"thing" json:"thing"` //good's name
@@ -44,6 +45,7 @@ type Buy struct {
 	Account   string `db:"account" json:"account"` //account of bank or platform
 	Order     string `db:"order" json:"order"` //in app order id
 	Morder	  string `db:"morder" json:"morder"` //merchant order id
+	Innout	  string `db:"innout" json:"innout"` //in or out state
 }
 
 //type ...
@@ -85,18 +87,47 @@ func (c *Con) List(t, page string) []Buy {
 func (c *Con) New(b Buy) (isdone bool, newid int64){
 	isdone = true
 	db := c.DB
-	stmt, err := db.Prepare("insert into list (t,money,type,ex,merchant,thing,trantype,account,`order`,morder) values (?,?,?,?,?,?,?,?,?,?)")
-	fmt.Println(stmt)
+	st, err := db.Begin()
 	if err != nil {
-		c.haveErr(err)
+		fmt.Println(err)
 		isdone = false
-		return
+		return 
 	}
-	res, er1 := stmt.Exec(b.T, b.Money, b.Type, b.Ex, b.Merchant, b.Thing, b.Trantype, b.Account, b.Order, b.Morder)
+	isdone, newid = c.doNew(b, st)
+	if isdone {
+		st.Commit()
+	}else{
+		st.Rollback()
+	}
+	return 
+}
+func (c *Con) BatchNew(bs []Buy) (isdone bool){
+	db := c.DB
+	st, err := db.Begin()
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	for i := 0; i < len(bs); i++ {
+		b := bs[i]
+		res, _ := c.doNew(b, st)
+		if res != true{
+			st.Rollback()
+			return false
+		}
+	}
+	fmt.Println("fined")
+	st.Commit()
+	return true
+}
+func (c *Con) doNew(b Buy, st *sql.Tx) (isdone bool, newid int64){
+	isdone = true
+	res, er1 := st.Exec("insert into list (t,money,type,ex,merchant,thing,trantype,account,`order`,morder,ttype,innout) values (?,?,?,?,?,?,?,?,?,?,?,?)",
+	b.T, b.Money, b.Type, b.Ex, b.Merchant, b.Thing, b.Trantype, b.Account, b.Order, b.Morder, b.Ttype, b.Innout)
 	if er1 != nil {
-		c.haveErr(er1)
+		fmt.Println(er1)
 		isdone = false
-		return
+		return 
 	}
 	newid, _ = res.LastInsertId()
 	return
@@ -204,7 +235,7 @@ func (c *Con) Sum(month,typeid,ver string) (data []Sum) {
 	}
 	sb.WriteString("group by ")
 	sb.WriteString(group)
-	sb.WriteString(" order by money desc")
+	sb.WriteString(" order by t desc")
 	var sql = sb.String()
 	fmt.Println(sql)
 	err := db.Select(&data, sql)
@@ -229,6 +260,8 @@ func (c *Con) haveErr(err error) {
 				"account" TEXT,
 				"order" TEXT,
 				"morder" TEXT,
+				"ttype" TEXT,
+				"innout" TEXT,
 				PRIMARY KEY ("id" ASC)
 			);
 			CREATE TABLE "type" (

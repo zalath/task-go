@@ -38,7 +38,7 @@ func main() {
 	r.POST("/move", move)
 	r.POST("/space", space) // get a formed tree of els
 	r.POST("/del", del)
-	fmt.Printf("running");
+	fmt.Println("running");
 	r.Run(":10488") // listen and serve on 0.0.0.0:8888
 }
 func bList(c *gin.Context) {
@@ -74,7 +74,7 @@ func bSumType(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 func bCsv(c *gin.Context) {
-	res := buy.Csv("wx")
+	res := buy.Csv(c.PostForm("type"), c)
 	c.JSON(http.StatusOK, res)
 }
 

@@ -4,30 +4,42 @@ import (
 	"fmt"
 	"encoding/csv"
 	"strconv"
-	"os"
 	"io"
 	dbb "tasktask/src/sqliteb"
 	"github.com/axgle/mahonia"
+	"github.com/gin-gonic/gin"
 )
-
-func Csv(filetype string) string {
-	// f, err := os.Open("./alipay_record_20220414_094715.csv")
-	f, err := os.Open("./微信支付账单(20220112-20220412).csv")
+/*
+filetype: wx ali
+*/
+func Csv(filetype string,c *gin.Context) string {
+	uf, err := c.FormFile("file")
 	if err != nil {
 		fmt.Println(err)
-		return ""
+		return "file mis"
+	}
+	f, er1 := uf.Open()
+	if er1 != nil {
+		fmt.Println(er1)
+		return "open mis"
 	}
 	reader := csv.NewReader(f)
 	reader.FieldsPerRecord = -1
+	var dat = []dbb.Buy{}
 	if filetype == "ali" {
-		de_ali(reader)
+		dat = deAli(reader)
 	}
 	if filetype == "wx" {
-		de_wx(reader)
+		dat = deWx(reader)
 	}
-	return ""
+	db := dbb.NewCon()
+	res := db.BatchNew(dat)
+	if res {
+		return "fin"
+	}
+	return "mis"
 }
-func de_ali(reader *csv.Reader){
+func deAli(reader *csv.Reader) []dbb.Buy{
 	var d = []dbb.Buy{}
 	for {
         row, err := reader.Read()
@@ -43,7 +55,7 @@ func de_ali(reader *csv.Reader){
 		var dt = dbb.Buy{}
 		dt.T = ConvertToString(row[10],"gbk","utf-8")
 		dt.Money, _ = strconv.ParseFloat(row[5],64)
-		dt.Type = ConvertToString(row[7],"gbk","utf-8")
+		dt.Ttype = ConvertToString(row[7],"gbk","utf-8")
 		dt.Ex = ConvertToString(row[6],"gbk","utf-8")
 		dt.Merchant = ConvertToString(row[1],"gbk","utf-8")
 		dt.Thing = ConvertToString(row[3],"gbk","utf-8")
@@ -51,12 +63,13 @@ func de_ali(reader *csv.Reader){
 		dt.Account = ConvertToString(row[4],"gbk","utf-8")
 		dt.Order = ConvertToString(row[8],"gbk","utf-8")
 		dt.Morder = ConvertToString(row[9],"gbk","utf-8")
+		dt.Innout = ConvertToString(row[0],"gbk","utf-8")
 		d=append(d,dt)
-    }
-	fmt.Println(d)
+  }
+	return d
 }
 
-func de_wx(reader *csv.Reader){
+func deWx(reader *csv.Reader) []dbb.Buy{
 	var d = []dbb.Buy{}
 	st := false
 	for {
@@ -74,31 +87,21 @@ func de_wx(reader *csv.Reader){
 			continue
 		}
 		var dt = dbb.Buy{}
-		dt.T = row[10]
-		dt.Money, _ = strconv.ParseFloat(row[5],64)
-		dt.Type = row[7]
-		dt.Ex = row[6]
-		dt.Merchant = row[1]
+		dt.T = row[0]
+		money := string([]rune(row[5])[1:])
+		dt.Money, _ = strconv.ParseFloat(money,64)
+		dt.Ttype = row[1]
+		dt.Ex = row[7]
+		dt.Merchant = row[2]
 		dt.Thing = row[3]
 		dt.Trantype = 0
-		dt.Account = row[4]
+		dt.Account = row[6]
 		dt.Order = row[8]
 		dt.Morder = row[9]
-
-
-		// dt.T = ConvertToString(row[10],"gbk","utf-8")
-		// dt.Money, _ = strconv.ParseFloat(row[5],64)
-		// dt.Type = ConvertToString(row[7],"gbk","utf-8")
-		// dt.Ex = ConvertToString(row[6],"gbk","utf-8")
-		// dt.Merchant = ConvertToString(row[1],"gbk","utf-8")
-		// dt.Thing = ConvertToString(row[3],"gbk","utf-8")
-		// dt.Trantype = 0
-		// dt.Account = ConvertToString(row[4],"gbk","utf-8")
-		// dt.Order = ConvertToString(row[8],"gbk","utf-8")
-		// dt.Morder = ConvertToString(row[9],"gbk","utf-8")
+		dt.Innout = row[4]
 		d=append(d,dt)
-    }
-	fmt.Println(d)
+  }
+	return d
 }
 func ConvertToString(src, srcCode, targetCode string) string {
 	srcCoder := mahonia.NewDecoder(srcCode)
