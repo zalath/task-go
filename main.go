@@ -38,7 +38,7 @@ func main() {
 	r.POST("/move", move)
 	r.POST("/space", space) // get a formed tree of els
 	r.POST("/del", del)
-	fmt.Println("running");
+	fmt.Println("running at 10488");
 	r.Run(":10488") // listen and serve on 0.0.0.0:8888
 }
 func bList(c *gin.Context) {
