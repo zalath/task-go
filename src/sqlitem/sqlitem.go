@@ -95,9 +95,21 @@ func (c *Con) Get(id string) El {
 	if err != nil {
 		c.haveErr(err)
 	}
+	el.Tikc = c.Count(el.ID)
 	return el
 }
-
+func (c *Con) Find(key string) []El {
+	db := c.DB
+	els := []El{}
+	err := db.Select(&els, "select * from e where title like '%'||$1||'%' order by pid desc", key)
+	if err != nil {
+		c.haveErr(err)
+	}
+	for i := 0; i < len(els); i++ {
+		els[i].Tikc  = c.Count(els[i].ID)
+	}
+	return els
+}
 //New create a new element
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true

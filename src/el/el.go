@@ -100,7 +100,12 @@ func GetEl(id string) dbt.El {
 	res := db.Get(id)
 	return res
 }
-
+//find a list of els
+func Find(key string) []dbt.El {
+	db := newdb()
+	res := db.Find(key)
+	return res
+}
 //Save submit saving element
 func Save(id, val, col string) string {
 	db := newdb()

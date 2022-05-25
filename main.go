@@ -38,6 +38,7 @@ func main() {
 	r.POST("/move", move)
 	r.POST("/space", space) // get a formed tree of els
 	r.POST("/del", del)
+	r.POST("/find", find)
 	fmt.Println("running at 10488");
 	r.Run(":10488") // listen and serve on 0.0.0.0:8888
 }
@@ -120,5 +121,9 @@ func move(c *gin.Context) {
 }
 func del(c *gin.Context) {
 	res := el.Del(c.PostForm("id"))
+	c.JSON(http.StatusOK, res)
+}
+func find(c *gin.Context) {
+	res := el.Find(c.PostForm("key"))
 	c.JSON(http.StatusOK, res)
 }
