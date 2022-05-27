@@ -42,6 +42,7 @@ type El struct {
 	Begintime string `db:"begintime" json:"begintime"`
 	Endtime   string `db:"endtime" json:"endtime"`
 	Cmt       string `db:"cmt" json:"cmt"`
+	Content		string `db:"content" json:"content"`
 	Tikc	  []Tikc	`json:"tikc"`
 	Child     interface{}
 }
@@ -114,13 +115,13 @@ func (c *Con) Find(key string) []El {
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
-	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime,endtime,cmt) values(?,?,?,?,?,?,?)")
+	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime,endtime,cmt,content) values(?,?,?,?,?,?,?,?)")
 	if err != nil {
 		c.haveErr(err)
 		isdone = false
 		return
 	}
-	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik, el.Begintime, el.Endtime, el.Cmt)
+	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik, el.Begintime, el.Endtime, el.Cmt, el.Content)
 	if er1 != nil {
 		c.haveErr(er1)
 		isdone = false
@@ -216,6 +217,7 @@ func (c *Con) haveErr(err error) {
 			"begintime" TEXT,
 			"endtime" TEXT,
 			"cmt" TEXT,
+			"content" TEXT,
 			PRIMARY KEY ("id" ASC)
 			);
 			
