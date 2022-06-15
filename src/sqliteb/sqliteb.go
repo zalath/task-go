@@ -18,6 +18,7 @@ type Con struct {
 //Opendb ...
 func (c *Con) Opendb() {
 	db, err := sqlx.Connect("sqlite3", "./buy.db")
+	defer db.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
