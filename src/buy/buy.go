@@ -25,6 +25,7 @@ func List(t, page string) []dbb.Buy {
 		page = "1"
 	}
 	data := db.List(t, page)//fetch out this month's record
+	defer db.DB.Close()
 	// getlist and return ,with paginated
 	return data
 }
@@ -43,12 +44,14 @@ func Buy(c *gin.Context) (result string) {
 		result = strconv.Itoa(int(newid))
 	}
 	db.DB.MustBegin().Commit()
+	defer db.DB.Close()
 	return
 }
 //del bill
 func Del(id string) bool{
 	db := newdb()
 	res := db.Del("list", id)
+	defer db.DB.Close()
 	return res
 }
 // type list
@@ -56,6 +59,7 @@ func Clas() []dbb.Clas{
 	// get class list and return, with paginated
 	db := newdb()
 	data := db.ClasList()
+	defer db.DB.Close()
 	return data
 }
 // new type
@@ -72,11 +76,13 @@ func NewClas(c *gin.Context) (result string) {
 		result = strconv.Itoa(int(newid))
 	}
 	db.DB.MustBegin().Commit()
+	defer db.DB.Close()
 	return 
 }
 func DelClas(id string) bool{
 	db := newdb()
 	res := db.Del("type", id)
+	defer db.DB.Close()
 	return res
 }
 // form summary data
@@ -86,6 +92,7 @@ func DelClas(id string) bool{
 func Sum(month,typeid,ver string) []dbb.Sum {
 	db := newdb()
 	res := db.Sum(month, typeid, ver)
+	defer db.DB.Close()
 	return res
 }
 func formBuy(c *gin.Context, db *dbb.Con) dbb.Buy {

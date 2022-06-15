@@ -19,6 +19,7 @@ func List(id, etype, tik string) []dbt.El {
 		return data
 	}
 	res := loopFormChild(data, idInt)
+	defer db.DB.Close()
 	return res
 }
 
@@ -51,6 +52,7 @@ func New(c *gin.Context) (result string) {
 		}
 	}
 	db.DB.MustBegin().Commit()
+	defer db.DB.Close()
 	return
 }
 
@@ -71,6 +73,7 @@ func Del(id string) (result string) {
 	}
 
 	db.DB.MustBegin().Commit()
+	defer db.DB.Close()
 	result = "done"
 	return
 }
@@ -98,18 +101,21 @@ func formEl(c *gin.Context, db *dbt.Con) dbt.El {
 func GetEl(id string) dbt.El {
 	db := newdb()
 	res := db.Get(id)
+	defer db.DB.Close()
 	return res
 }
 //find a list of els
 func Find(key string) []dbt.El {
 	db := newdb()
 	res := db.Find(key)
+	defer db.DB.Close()
 	return res
 }
 //Save submit saving element
 func Save(id, val, col string) string {
 	db := newdb()
 	res := db.Update(id, val, col)
+	defer db.DB.Close()
 	if res {
 		return "done"
 	}
@@ -160,6 +166,7 @@ func Move(id, npid string) string {
 		return "mis"
 	}
 	db.DB.MustBegin().Commit()
+	defer db.DB.Close()
 	return "done"
 }
 func updateCt(id int, ctype string, db *dbt.Con) bool {
@@ -167,11 +174,13 @@ func updateCt(id int, ctype string, db *dbt.Con) bool {
 	el := db.Get(cid)
 	if ctype == "+" {
 		res := db.Update(cid, strconv.Itoa(el.Ct+1), "ct")
+		defer db.DB.Close()
 		if !res {
 			return false
 		}
 	} else if ctype == "-" {
 		res := db.Update(cid, strconv.Itoa(el.Ct-1), "ct")
+		defer db.DB.Close()
 		if !res {
 			return false
 		}
