@@ -117,6 +117,7 @@ func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
 	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime,endtime,cmt,content) values(?,?,?,?,?,?,?,?)")
+	defer stmt.Close()
 	if err != nil {
 		c.haveErr(err)
 		isdone = false
@@ -163,6 +164,7 @@ func (c *Con) Update(id, val, col string) (isdone bool) {
 	sb.WriteString("=? where id=?")
 
 	stmt, err := db.Prepare(sb.String())
+	defer stmt.Close()
 	if err != nil {
 		c.haveErr(err)
 	}
@@ -187,6 +189,7 @@ func (c *Con) UpdateP(p, np, id string) (isdone bool) {
 	} else {
 		stmt, err = db.Prepare("update e set `p` = replace(`p`,?,?) where `p` like '%'||?||'%'")
 	}
+	defer stmt.Close()
 	if err != nil {
 		c.haveErr(err)
 	}

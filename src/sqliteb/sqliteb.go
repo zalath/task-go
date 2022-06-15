@@ -147,6 +147,7 @@ func (c *Con) Update(table, id, val, col string) (isdone bool) {
 	sb.WriteString("=? where id=?")
 
 	stmt, err := db.Prepare(sb.String())
+	defer stmt.Close()
 	if err != nil {
 		c.haveErr(err)
 	}
@@ -189,6 +190,7 @@ func (c *Con) ClasNew(cs Clas) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
 	stmt, err := db.Prepare("insert into type (name,money,ex) values (?,?,?)")
+	defer stmt.Close()
 	if err != nil {
 		c.haveErr(err)
 		isdone = false
