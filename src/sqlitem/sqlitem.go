@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
-
+	"os"
+	"path/filepath"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3" //sqlite3
 )
@@ -17,7 +18,9 @@ type Con struct {
 
 //Opendb ...
 func (c *Con) Opendb() {
-	db, err := sqlx.Connect("sqlite3", "./db.db")
+	pathp, _ := os.Executable()
+	path := filepath.Dir(pathp)
+	db, err := sqlx.Connect("sqlite3", path+"/db.db")
 	if err != nil {
 		log.Fatal(err)
 	}
