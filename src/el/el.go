@@ -45,10 +45,12 @@ func New(c *gin.Context) (result string) {
 	if !res {
 		db.DB.MustBegin().Rollback()
 		result = "mis"
+		return
 	} else {
 		if !updateCt(el.Pid, "+", db) {
 			db.DB.MustBegin().Rollback()
 			result = "mis"
+			return
 		}
 	}
 	db.DB.MustBegin().Commit()
@@ -65,10 +67,12 @@ func Del(id string) (result string) {
 	if !res {
 		db.DB.MustBegin().Rollback()
 		result = "mis"
+		return
 	} else {
 		if !updateCt(el.Pid, "-", db) {
 			db.DB.MustBegin().Rollback()
 			result = "mis"
+			return
 		}
 	}
 
@@ -101,6 +105,7 @@ func formEl(c *gin.Context, db *dbt.Con) dbt.El {
 func GetEl(id string) dbt.El {
 	db := newdb()
 	res := db.Get(id)
+	fmt.Println(res)
 	defer db.DB.Close()
 	return res
 }
@@ -174,13 +179,11 @@ func updateCt(id int, ctype string, db *dbt.Con) bool {
 	el := db.Get(cid)
 	if ctype == "+" {
 		res := db.Update(cid, strconv.Itoa(el.Ct+1), "ct")
-		defer db.DB.Close()
 		if !res {
 			return false
 		}
 	} else if ctype == "-" {
 		res := db.Update(cid, strconv.Itoa(el.Ct-1), "ct")
-		defer db.DB.Close()
 		if !res {
 			return false
 		}

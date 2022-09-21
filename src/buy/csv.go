@@ -1,5 +1,5 @@
 package buy
-
+//个人中心-导出历史账单的解析
 import (
 	"fmt"
 	"encoding/csv"
@@ -39,6 +39,7 @@ func Csv(filetype string,c *gin.Context) string {
 	}
 	return "mis"
 }
+//解析支付宝账单
 func deAli(reader *csv.Reader) []dbb.Buy{
 	var d = []dbb.Buy{}
 	for {
@@ -68,7 +69,7 @@ func deAli(reader *csv.Reader) []dbb.Buy{
   }
 	return d
 }
-
+//解析微信账单
 func deWx(reader *csv.Reader) []dbb.Buy{
 	var d = []dbb.Buy{}
 	st := false

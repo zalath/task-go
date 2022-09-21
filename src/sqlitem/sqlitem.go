@@ -20,6 +20,7 @@ type Con struct {
 func (c *Con) Opendb() {
 	pathp, _ := os.Executable()
 	path := filepath.Dir(pathp)
+	path = "."
 	db, err := sqlx.Connect("sqlite3", path+"/db.db")
 	if err != nil {
 		log.Fatal(err)

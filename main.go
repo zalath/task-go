@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"tasktask/src/note"
 	"tasktask/src/el"
-	"tasktask/src/middleware"
 	"tasktask/src/buy"
+	"tasktask/src/middleware"
 	"time"
 	"github.com/gin-gonic/gin"
 )
@@ -29,6 +30,17 @@ func main() {
 	r.POST("/bSumMonth", bSumMonth)
 	r.POST("/bSumType", bSumType)
 	r.POST("/bCsv",bCsv)
+
+	
+	r.POST("/nlist", nlist) //get a list of els
+	r.POST("/nel", ngetel)
+	r.POST("/nnew", nnew)
+	r.POST("/ntik", ntik)
+	r.POST("/nsave", nsave)
+	r.POST("/nmove", nmove)
+	r.POST("/nspace", nspace) // get a formed tree of els
+	r.POST("/ndel", ndel)
+	r.POST("/nfind", nfind)
 
 	r.POST("/list", list) //get a list of els
 	r.POST("/el", getel)
@@ -76,6 +88,55 @@ func bSumType(c *gin.Context) {
 }
 func bCsv(c *gin.Context) {
 	res := buy.Csv(c.PostForm("type"), c)
+	c.JSON(http.StatusOK, res)
+}
+
+func nlist(c *gin.Context) {
+	id := c.PostForm("id")
+	tik := c.PostForm("tik")
+	res := note.List(id, "list", tik)
+	c.JSON(http.StatusOK, res)
+}
+func nspace(c *gin.Context) {
+	id := c.PostForm("id")
+	tik := c.PostForm("tik")
+	res := note.List(id, "", tik)
+	c.JSON(http.StatusOK, res)
+}
+func nnew(c *gin.Context) {
+	res := note.New(c)
+	c.JSON(http.StatusOK, res)
+}
+func ngetel(c *gin.Context) {
+	res := note.GetEl(c.PostForm("id"))
+	c.JSON(http.StatusOK, res)
+}
+func ntik(c *gin.Context) {
+	res := note.Save(c.PostForm("id"), c.PostForm("tik"), "tik")
+	if c.PostForm("tik") == "2" {
+		note.Save(c.PostForm("id"), time.Now().Format("2006-1-2 15:04:05"), "endtime")
+	} else {
+		note.Save(c.PostForm("id"), "", "endtime")
+	}
+	c.JSON(http.StatusOK, res)
+}
+func nsave(c *gin.Context) {
+	res := note.Save(c.PostForm("id"), c.PostForm("title"), "title")
+	if res == "done" {
+		res = note.Save(c.PostForm("id"), c.PostForm("cmt"), "cmt")
+	}
+	c.JSON(http.StatusOK, res)
+}
+func nmove(c *gin.Context) {
+	res := note.Move(c.PostForm("id"), c.PostForm("npid"))
+	c.JSON(http.StatusOK, res)
+}
+func ndel(c *gin.Context) {
+	res := note.Del(c.PostForm("id"))
+	c.JSON(http.StatusOK, res)
+}
+func nfind(c *gin.Context) {
+	res := note.Find(c.PostForm("key"))
 	c.JSON(http.StatusOK, res)
 }
 
