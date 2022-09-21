@@ -10,7 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3" //sqlite3
 )
-
+var Istest = false
 /*Con ...*/
 type Con struct {
 	DB *sqlx.DB
@@ -20,7 +20,9 @@ type Con struct {
 func (c *Con) Opendb() {
 	pathp, _ := os.Executable()
 	path := filepath.Dir(pathp)
-	path = "."
+	if Istest == true {
+		path = "."
+	}
 	db, err := sqlx.Connect("sqlite3", path+"/note.db")
 	if err != nil {
 		log.Fatal(err)

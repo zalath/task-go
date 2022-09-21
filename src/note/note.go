@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-
 //List return direct child of selected node
 func List(id, etype, tik string) []dbt.El {
 	db := newdb()

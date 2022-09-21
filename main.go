@@ -9,9 +9,13 @@ import (
 	"tasktask/src/middleware"
 	"time"
 	"github.com/gin-gonic/gin"
+	dbm "tasktask/src/sqlitem"
+	dbn "tasktask/src/sqliten"
+	dbb "tasktask/src/sqliteb"
 )
 
 func main() {
+	setTest("test")//测试环境打开本行，调整数据库位置
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.LoggerWithWriter(gin.DefaultWriter,"/h"),gin.Recovery())
@@ -187,4 +191,10 @@ func del(c *gin.Context) {
 func find(c *gin.Context) {
 	res := el.Find(c.PostForm("key"))
 	c.JSON(http.StatusOK, res)
+}
+
+func setTest(v string) {
+	dbm.Istest = true
+	dbn.Istest = true
+	dbb.Istest = true
 }

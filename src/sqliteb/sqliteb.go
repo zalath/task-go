@@ -4,12 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"strconv"
 	"github.com/jmoiron/sqlx"
 	// _ "github.com/mattn/go-sqlite3" //sqlite3
 )
-
+var Istest = false
 /*Con ...*/
 type Con struct {
 	DB *sqlx.DB
@@ -17,7 +19,12 @@ type Con struct {
 
 //Opendb ...
 func (c *Con) Opendb() {
-	db, err := sqlx.Connect("sqlite3", "./buy.db")
+	pathp, _ := os.Executable()
+	path := filepath.Dir(pathp)
+	if Istest == true {
+		path = "."
+	}
+	db, err := sqlx.Connect("sqlite3", path+"/buy.db")
 	if err != nil {
 		log.Fatal(err)
 	}
