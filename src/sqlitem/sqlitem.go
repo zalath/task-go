@@ -10,7 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3" //sqlite3
 )
-var Istest = true
+var Istest = false
 /*Con ...*/
 type Con struct {
 	DB *sqlx.DB
