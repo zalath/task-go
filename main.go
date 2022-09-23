@@ -125,9 +125,13 @@ func ntik(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 func nsave(c *gin.Context) {
+	fmt.Println(c)
 	res := note.Save(c.PostForm("id"), c.PostForm("title"), "title")
 	if res == "done" {
 		res = note.Save(c.PostForm("id"), c.PostForm("cmt"), "cmt")
+		if res == "done" {
+			res = note.Save(c.PostForm("id"), c.PostForm("content"), "content")
+		}
 	}
 	c.JSON(http.StatusOK, res)
 }
