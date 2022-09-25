@@ -3,22 +3,24 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"tasktask/src/note"
-	"tasktask/src/el"
 	"tasktask/src/buy"
+	"tasktask/src/el"
+	"tasktask/src/file"
 	"tasktask/src/middleware"
-	"time"
-	"github.com/gin-gonic/gin"
+	"tasktask/src/note"
+	dbb "tasktask/src/sqliteb"
 	dbm "tasktask/src/sqlitem"
 	dbn "tasktask/src/sqliten"
-	dbb "tasktask/src/sqliteb"
+	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	setTest("test")//测试环境打开本行，调整数据库位置
+	// setTest("test") //测试环境打开本行，调整数据库位置
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
-	r.Use(gin.LoggerWithWriter(gin.DefaultWriter,"/h"),gin.Recovery())
+	r.Use(gin.LoggerWithWriter(gin.DefaultWriter, "/h"), gin.Recovery())
 	r.Use(middleware.Cors())
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -33,33 +35,37 @@ func main() {
 	r.POST("/bDelClas", bDelClas)
 	r.POST("/bSumMonth", bSumMonth)
 	r.POST("/bSumType", bSumType)
-	r.POST("/bCsv",bCsv)
+	r.POST("/bCsv", bCsv)
 
-	
-	r.POST("/nlist", nlist) //get a list of els
+	r.POST("/nlist", nlist)
 	r.POST("/nel", ngetel)
 	r.POST("/nnew", nnew)
 	r.POST("/ntik", ntik)
 	r.POST("/nsave", nsave)
 	r.POST("/nmove", nmove)
-	r.POST("/nspace", nspace) // get a formed tree of els
+	r.POST("/nspace", nspace)
 	r.POST("/ndel", ndel)
 	r.POST("/nfind", nfind)
 
-	r.POST("/list", list) //get a list of els
+	r.POST("/list", list)
 	r.POST("/el", getel)
 	r.POST("/new", new)
 	r.POST("/tik", tik)
 	r.POST("/save", save)
 	r.POST("/move", move)
-	r.POST("/space", space) // get a formed tree of els
+	r.POST("/space", space)
 	r.POST("/del", del)
 	r.POST("/find", find)
-	fmt.Println("running at 10488");
+
+	// get file upload
+	r.POST("/upload", upload)
+	r.POST("/del", del)
+	fmt.Println("running at 10488")
+
 	r.Run(":10488") // listen and serve on 0.0.0.0:8888
 }
 func bList(c *gin.Context) {
-	res := buy.List(c.PostForm("t"),c.PostForm("page"))
+	res := buy.List(c.PostForm("t"), c.PostForm("page"))
 	c.JSON(http.StatusOK, res)
 }
 func bBuy(c *gin.Context) {
@@ -83,11 +89,11 @@ func bDelClas(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 func bSumMonth(c *gin.Context) {
-	res := buy.Sum(c.PostForm("month"),c.PostForm("typeid"),"month")
+	res := buy.Sum(c.PostForm("month"), c.PostForm("typeid"), "month")
 	c.JSON(http.StatusOK, res)
 }
 func bSumType(c *gin.Context) {
-	res := buy.Sum(c.PostForm("month"), c.PostForm("typeid"),"type")
+	res := buy.Sum(c.PostForm("month"), c.PostForm("typeid"), "type")
 	c.JSON(http.StatusOK, res)
 }
 func bCsv(c *gin.Context) {
@@ -128,6 +134,9 @@ func nsave(c *gin.Context) {
 	res := note.Save(c.PostForm("id"), c.PostForm("title"), "title")
 	if res == "done" {
 		res = note.Save(c.PostForm("id"), c.PostForm("cmt"), "cmt")
+		if res == "done" {
+			res = note.Save(c.PostForm("id"), c.PostForm("content"), "content")
+		}
 	}
 	c.JSON(http.StatusOK, res)
 }
@@ -197,4 +206,16 @@ func setTest(v string) {
 	dbm.Istest = true
 	dbn.Istest = true
 	dbb.Istest = true
+	file.Istest = true
+}
+
+func upload(c *gin.Context) {
+	res := file.Upload(c)
+	res = file.Del(c)
+	c.JSON(http.StatusOK, res)
+}
+
+func del(c *gin.Context) {
+	res := file.Del(c)
+	c.JSON(http.StatusOK, res)
 }

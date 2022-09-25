@@ -4,13 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strings"
 	"os"
 	"path/filepath"
+	"strings"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3" //sqlite3
 )
+
 var Istest = false
+
 /*Con ...*/
 type Con struct {
 	DB *sqlx.DB
@@ -48,13 +51,13 @@ type El struct {
 	Begintime string `db:"begintime" json:"begintime"`
 	Endtime   string `db:"endtime" json:"endtime"`
 	Cmt       string `db:"cmt" json:"cmt"`
-	Content		string `db:"content" json:"content"`
-	Tikc	  []Tikc	`json:"tikc"`
+	Content   string `db:"content" json:"content"`
+	Tikc      []Tikc `json:"tikc"`
 	Child     interface{}
 }
 type Tikc struct {
 	Tik int `db:"tik" json:"tik"`
-	C int `db:"c" json:"c"`
+	C   int `db:"c" json:"c"`
 }
 
 //List a test
@@ -65,17 +68,17 @@ func (c *Con) List(id, etype, tik string) []El {
 	var where = ""
 	if tik != "" {
 		where = " and tik = " + tik
-	}	
+	}
 	if etype == "list" {
-		err = db.Select(&data, "select * from e where pid = ? " + where + " order by tik asc,id desc", id)
+		err = db.Select(&data, "select * from e where pid = ? "+where+" order by tik asc,id desc", id)
 	} else {
 		if id == "0" {
 			id = ","
 		}
-		err = db.Select(&data, "select * from e where p like '%'||$1||'%' " + where + "  order by tik asc,id desc", id)
+		err = db.Select(&data, "select * from e where p like '%'||$1||'%' "+where+"  order by tik asc,id desc", id)
 	}
 	for i := 0; i < len(data); i++ {
-		data[i].Tikc  = c.Count(data[i].ID)
+		data[i].Tikc = c.Count(data[i].ID)
 	}
 	if err != nil {
 		c.haveErr(err)
@@ -98,7 +101,7 @@ func (c *Con) Count(id int) []Tikc {
 func (c *Con) Get(id string) El {
 	db := c.DB
 	el := El{}
-	err := db.Get(&el, "select id,title,tik,p,pid,ct,cmt from e where id = ?", id)
+	err := db.Get(&el, "select id,title,tik,p,pid,ct,cmt,content from e where id = ?", id)
 	if err != nil {
 		c.haveErr(err)
 	}
@@ -113,10 +116,11 @@ func (c *Con) Find(key string) []El {
 		c.haveErr(err)
 	}
 	for i := 0; i < len(els); i++ {
-		els[i].Tikc  = c.Count(els[i].ID)
+		els[i].Tikc = c.Count(els[i].ID)
 	}
 	return els
 }
+
 //New create a new element
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
@@ -229,7 +233,7 @@ func (c *Con) haveErr(err error) {
 			"content" TEXT,
 			PRIMARY KEY ("id" ASC)
 			);
-			
+			insert into e(id,title,tik,pid,p,ct,begintime,endtime,cmt,content) values('0','======','0','-1','','0','','','','');
 			`
 		_, err := db.Exec(sql)
 		if err != nil {
