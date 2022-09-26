@@ -1,8 +1,10 @@
+
 package file
 
 import (
 	"fmt"
 	"os"
+	"time"
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +17,7 @@ func Del(c *gin.Context) string {
 	pathp, _ := os.Executable()
 	path := filepath.Dir(pathp) + storagepath
 	if Istest == true {
-		path = "."
+		path = "./pic/"
 	}
 	oldfilename := c.PostForm("del")
 	if oldfilename != "" {
@@ -31,21 +33,22 @@ func Del(c *gin.Context) string {
 func Upload(c *gin.Context) string {
 	pathp, _ := os.Executable()
 	path := filepath.Dir(pathp) + storagepath
-	url := storagepath
+	url := "f/"
 	if Istest == true {
-		path = "."
+		path = "./pic/"
 	}
-	file, errLoad := c.FormFile("pic")
+	file, errLoad := c.FormFile("file")
 	if errLoad != nil {
 		fmt.Println(errLoad)
-		return "error"
+		return "mis"
 	}
-	filepath := path + file.Filename
-	url = url + file.Filename
+	timestamp := time.Now().Format("2006-01-02-03-04-05")
+	filepath := path + timestamp + file.Filename
+	url = url + timestamp + file.Filename
 	err := c.SaveUploadedFile(file, filepath)
 	if err != nil {
 		fmt.Println(err)
-		return "error"
+		return "mis"
 	}
 	return url
 }

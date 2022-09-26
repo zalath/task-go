@@ -52,6 +52,7 @@ type El struct {
 	Endtime   string `db:"endtime" json:"endtime"`
 	Cmt       string `db:"cmt" json:"cmt"`
 	Content   string `db:"content" json:"content"`
+	File		string `db:"file" json:"file"`
 	Tikc      []Tikc `json:"tikc"`
 	Child     interface{}
 }
@@ -101,7 +102,7 @@ func (c *Con) Count(id int) []Tikc {
 func (c *Con) Get(id string) El {
 	db := c.DB
 	el := El{}
-	err := db.Get(&el, "select id,title,tik,p,pid,ct,cmt,content from e where id = ?", id)
+	err := db.Get(&el, "select id,title,tik,p,pid,ct,cmt,content,file from e where id = ?", id)
 	if err != nil {
 		c.haveErr(err)
 	}
@@ -125,14 +126,14 @@ func (c *Con) Find(key string) []El {
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
-	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime,endtime,cmt,content) values(?,?,?,?,?,?,?,?)")
+	stmt, err := db.Prepare("insert into e (title,pid,p,tik,begintime,endtime,cmt,content,file) values(?,?,?,?,?,?,?,?,?)")
 	defer stmt.Close()
 	if err != nil {
 		c.haveErr(err)
 		isdone = false
 		return
 	}
-	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik, el.Begintime, el.Endtime, el.Cmt, el.Content)
+	res, er1 := stmt.Exec(el.Title, el.Pid, el.P, el.Tik, el.Begintime, el.Endtime, el.Cmt, el.Content, el.File)
 	if er1 != nil {
 		c.haveErr(er1)
 		isdone = false
@@ -231,9 +232,10 @@ func (c *Con) haveErr(err error) {
 			"endtime" TEXT,
 			"cmt" TEXT,
 			"content" TEXT,
+			"file" TEXT,
 			PRIMARY KEY ("id" ASC)
 			);
-			insert into e(id,title,tik,pid,p,ct,begintime,endtime,cmt,content) values('0','======','0','-1','','0','','','','');
+			insert into e(id,title,tik,pid,p,ct,begintime,endtime,cmt,content,file) values('0','======','0','-1','','0','','','','','');
 			`
 		_, err := db.Exec(sql)
 		if err != nil {

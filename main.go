@@ -15,9 +15,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-
+var istest = false
 func main() {
-	// setTest("test") //测试环境打开本行，调整数据库位置
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.LoggerWithWriter(gin.DefaultWriter, "/h"), gin.Recovery())
@@ -27,6 +26,14 @@ func main() {
 			"message": "pong",
 		})
 	})
+	//--test start--测试环境打开本行，调整数据库位置
+	setTest("test")
+	if istest {
+		r.StaticFS("/f", http.Dir("./pic"))
+	} else {
+		r.StaticFS("/f", http.Dir("./../storage/dcim/taskres/"))
+	}
+	//--test end--------
 	r.POST("/bList", bList)
 	r.POST("/bBuy", bBuy)
 	r.POST("/bClas", bClas)
@@ -58,8 +65,8 @@ func main() {
 	r.POST("/find", find)
 
 	// get file upload
-	r.POST("/upload", upload)
-	r.POST("/del", del)
+	r.POST("/fupload", fupload)
+	r.POST("/fdel", fdel)
 	fmt.Println("running at 10488")
 
 	r.Run(":10488") // listen and serve on 0.0.0.0:8888
@@ -137,6 +144,9 @@ func nsave(c *gin.Context) {
 		res = note.Save(c.PostForm("id"), c.PostForm("cmt"), "cmt")
 		if res == "done" {
 			res = note.Save(c.PostForm("id"), c.PostForm("content"), "content")
+			if res == "done" {
+				res = note.Save(c.PostForm("id"), c.PostForm("file"), "file")
+			}
 		}
 	}
 	c.JSON(http.StatusOK, res)
@@ -204,19 +214,19 @@ func find(c *gin.Context) {
 }
 
 func setTest(v string) {
+	istest = true
 	dbm.Istest = true
 	dbn.Istest = true
 	dbb.Istest = true
 	file.Istest = true
 }
 
-func upload(c *gin.Context) {
-	res := file.Upload(c)
-	res = file.Del(c)
+func fupload(c *gin.Context) {
+	res := file.Del(c)
+	res = file.Upload(c)	
 	c.JSON(http.StatusOK, res)
 }
-
-func del(c *gin.Context) {
+func fdel(c *gin.Context) {
 	res := file.Del(c)
 	c.JSON(http.StatusOK, res)
 }
