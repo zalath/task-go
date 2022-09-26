@@ -214,9 +214,9 @@ func (c *Con) UpdateP(p, np, id string) (isdone bool) {
 }
 
 func (c *Con) haveErr(err error) {
-	if err.Error() == "no such table: note" {
+	if err.Error() == "no such table: e" {
 		db := c.DB
-		sql := `CREATE TABLE "note" (
+		sql := `CREATE TABLE "e" (
 			"id"  INTEGER NOT NULL,
 			"title"  TEXT NOT NULL,
 			"tik"  INTEGER NOT NULL,
@@ -229,7 +229,7 @@ func (c *Con) haveErr(err error) {
 			"content" TEXT,
 			PRIMARY KEY ("id" ASC)
 			);
-			
+			insert into e(id,title,tik,pid,p,ct,begintime,endtime,cmt,content) values('0','======','0','-1','','0','','','','');
 			`
 		_, err := db.Exec(sql)
 		if err != nil {
