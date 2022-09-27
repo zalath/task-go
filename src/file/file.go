@@ -21,10 +21,10 @@ func Del(c *gin.Context) string {
 	}
 	oldfilename := c.PostForm("del")
 	if oldfilename != "" {
+		oldfilename = oldfilename[2:]
 		oldfilepath := path + oldfilename
 		err := os.Remove(oldfilepath)
 		if err != nil {
-			fmt.Println(err)
 			return "error"
 		}
 	}

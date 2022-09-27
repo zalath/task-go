@@ -28,12 +28,12 @@ func main() {
 	})
 	//--test start--测试环境打开本行，调整数据库位置
 	setTest("test")
+	//--test end--------
 	if istest {
 		r.StaticFS("/f", http.Dir("./pic"))
 	} else {
 		r.StaticFS("/f", http.Dir("./../storage/dcim/taskres/"))
 	}
-	//--test end--------
 	r.POST("/bList", bList)
 	r.POST("/bBuy", bBuy)
 	r.POST("/bClas", bClas)
@@ -197,6 +197,9 @@ func save(c *gin.Context) {
 	res := el.Save(c.PostForm("id"), c.PostForm("title"), "title")
 	if res == "done" {
 		res = el.Save(c.PostForm("id"), c.PostForm("cmt"), "cmt")
+		if res == "done" {
+			res = el.Save(c.PostForm("id"), c.PostForm("file"), "file")
+		}
 	}
 	c.JSON(http.StatusOK, res)
 }
