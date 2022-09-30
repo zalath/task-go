@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,11 +22,14 @@ func Del(c *gin.Context) string {
 	}
 	oldfilename := c.PostForm("del")
 	if oldfilename != "" {
-		oldfilename = oldfilename[2:]
-		oldfilepath := path + oldfilename
-		err := os.Remove(oldfilepath)
-		if err != nil {
-			return "error"
+		filelist := strings.Split(oldfilename, ",")
+		for _, file := range filelist {
+			filename := file[2:]
+			filepath := path + filename
+			err := os.Remove(filepath)
+			if err != nil {
+				return "error"
+			}
 		}
 	}
 	return "done"
