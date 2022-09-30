@@ -12,6 +12,8 @@ import (
 	dbm "tasktask/src/sqlitem"
 	dbn "tasktask/src/sqliten"
 	"time"
+	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,8 +33,10 @@ func main() {
 	//--test end--------
 	if istest {
 		r.StaticFS("/f", http.Dir("./pic"))
-	} else {
-		r.StaticFS("/f", http.Dir("./../storage/dcim/taskres/"))
+	} else {	
+		pathp, _ := os.Executable()
+		path := filepath.Dir(pathp) + "/../storage/dcim/taskres/"
+		r.StaticFS("/f", http.Dir(path))
 	}
 	r.POST("/bList", bList)
 	r.POST("/bBuy", bBuy)
