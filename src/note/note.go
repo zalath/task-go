@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
 //List return direct child of selected node
 func List(id, etype, tik string) []dbt.El {
 	db := newdb()
@@ -100,6 +101,7 @@ func formEl(c *gin.Context, db *dbt.Con) dbt.El {
 	el.Tik = 1
 	el.Ct = 0
 	el.Begintime = time.Now().Format("2006-1-2 15:04:05")
+	el.Content = c.PostForm("content")
 	el.Endtime = "-"
 	fmt.Printf("%#v", el)
 	return el
@@ -112,6 +114,7 @@ func GetEl(id string) dbt.El {
 	defer db.DB.Close()
 	return res
 }
+
 //find a list of els
 func Find(key string) []dbt.El {
 	db := newdb()
@@ -119,6 +122,7 @@ func Find(key string) []dbt.El {
 	defer db.DB.Close()
 	return res
 }
+
 //Save submit saving element
 func Save(id, val, col string) string {
 	db := newdb()
