@@ -6,12 +6,15 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"strconv"
+	"strings"
+
 	"github.com/jmoiron/sqlx"
 	// _ "github.com/mattn/go-sqlite3" //sqlite3
 )
+
 var Istest = false
+
 /*Con ...*/
 type Con struct {
 	DB *sqlx.DB
@@ -24,7 +27,7 @@ func (c *Con) Opendb() {
 	if Istest == true {
 		path = "."
 	}
-	db, err := sqlx.Connect("sqlite3", path+"/buy.db")
+	db, err := sqlx.Connect("sqlite3", path+"/db/buy.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,33 +43,33 @@ func NewCon() *Con {
 
 //buy ...
 type Buy struct {
-	ID        int    `db:"id" json:"id"`
-	T		  string `db:"t" json:"t"`
-	Money	  float64 `db:"money" json:"money"`
-	Type	  string `db:"type" json:"type"`
-	Ttype	  string `db:"ttype" json:"ttype"`
-	Ex		  string `db:"ex" json:"ex"`
-	Merchant  string `db:"merchant" json:"merchant"`
-	Thing     string `db:"thing" json:"thing"` //good's name
-	Trantype  int    `db:"trantype" json:"trantype"` //pay type 0 income,1 pay
-	Account   string `db:"account" json:"account"` //account of bank or platform
-	Order     string `db:"order" json:"order"` //in app order id
-	Morder	  string `db:"morder" json:"morder"` //merchant order id
-	Innout	  string `db:"innout" json:"innout"` //in or out state
+	ID       int     `db:"id" json:"id"`
+	T        string  `db:"t" json:"t"`
+	Money    float64 `db:"money" json:"money"`
+	Type     string  `db:"type" json:"type"`
+	Ttype    string  `db:"ttype" json:"ttype"`
+	Ex       string  `db:"ex" json:"ex"`
+	Merchant string  `db:"merchant" json:"merchant"`
+	Thing    string  `db:"thing" json:"thing"`       //good's name
+	Trantype int     `db:"trantype" json:"trantype"` //pay type 0 income,1 pay
+	Account  string  `db:"account" json:"account"`   //account of bank or platform
+	Order    string  `db:"order" json:"order"`       //in app order id
+	Morder   string  `db:"morder" json:"morder"`     //merchant order id
+	Innout   string  `db:"innout" json:"innout"`     //in or out state
 }
 
 //type ...
 type Clas struct {
-	ID        int    `db:"id" json:"id"`
-	Name	  string `db:"name" json:"name"`
-	Money	  float64 `db:"money" json:"money"`
-	Ex		  string `db:"ex" json:"ex"`
+	ID    int     `db:"id" json:"id"`
+	Name  string  `db:"name" json:"name"`
+	Money float64 `db:"money" json:"money"`
+	Ex    string  `db:"ex" json:"ex"`
 }
 
 type Sum struct {
-	Key	string	`db:"key" json:"key"`
-	Count	string	`db:"count" json:"count"`
-	Money	string	`db:"money" json:"money"`
+	Key   string `db:"key" json:"key"`
+	Count string `db:"count" json:"count"`
+	Money string `db:"money" json:"money"`
 }
 
 func (c *Con) List(t, page string) []Buy {
@@ -76,7 +79,7 @@ func (c *Con) List(t, page string) []Buy {
 	var sb strings.Builder
 	// sb.WriteString("select * from list")
 	pagenow, _ := strconv.Atoi(page)
-	limit := strconv.Itoa((pagenow-1) * 10)
+	limit := strconv.Itoa((pagenow - 1) * 10)
 	sb.WriteString("select * from list where t like '%")
 	sb.WriteString(t)
 	sb.WriteString("%' order by t desc ")
@@ -91,24 +94,24 @@ func (c *Con) List(t, page string) []Buy {
 	}
 	return data
 }
-func (c *Con) New(b Buy) (isdone bool, newid int64){
+func (c *Con) New(b Buy) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
 	st, err := db.Begin()
 	if err != nil {
 		fmt.Println(err)
 		isdone = false
-		return 
+		return
 	}
 	isdone, newid = c.doNew(b, st)
 	if isdone {
 		st.Commit()
-	}else{
+	} else {
 		st.Rollback()
 	}
-	return 
+	return
 }
-func (c *Con) BatchNew(bs []Buy) (isdone bool){
+func (c *Con) BatchNew(bs []Buy) (isdone bool) {
 	db := c.DB
 	st, err := db.Begin()
 	if err != nil {
@@ -118,7 +121,7 @@ func (c *Con) BatchNew(bs []Buy) (isdone bool){
 	for i := 0; i < len(bs); i++ {
 		b := bs[i]
 		res, _ := c.doNew(b, st)
-		if res != true{
+		if res != true {
 			st.Rollback()
 			return false
 		}
@@ -127,18 +130,19 @@ func (c *Con) BatchNew(bs []Buy) (isdone bool){
 	st.Commit()
 	return true
 }
-func (c *Con) doNew(b Buy, st *sql.Tx) (isdone bool, newid int64){
+func (c *Con) doNew(b Buy, st *sql.Tx) (isdone bool, newid int64) {
 	isdone = true
 	res, er1 := st.Exec("insert into list (t,money,type,ex,merchant,thing,trantype,account,`order`,morder,ttype,innout) values (?,?,?,?,?,?,?,?,?,?,?,?)",
-	b.T, b.Money, b.Type, b.Ex, b.Merchant, b.Thing, b.Trantype, b.Account, b.Order, b.Morder, b.Ttype, b.Innout)
+		b.T, b.Money, b.Type, b.Ex, b.Merchant, b.Thing, b.Trantype, b.Account, b.Order, b.Morder, b.Ttype, b.Innout)
 	if er1 != nil {
 		fmt.Println(er1)
 		isdone = false
-		return 
+		return
 	}
 	newid, _ = res.LastInsertId()
 	return
 }
+
 // update any table any col any val in db
 func (c *Con) Update(table, id, val, col string) (isdone bool) {
 	fmt.Println("update tal :", id, col, val)
@@ -165,6 +169,7 @@ func (c *Con) Update(table, id, val, col string) (isdone bool) {
 	}
 	return
 }
+
 // delete any table's any line
 func (c *Con) Del(table, id string) (isdone bool) {
 	isdone = true
@@ -211,7 +216,7 @@ func (c *Con) ClasNew(cs Clas) (isdone bool, newid int64) {
 	newid, _ = res.LastInsertId()
 	return
 }
-func (c *Con) Sum(month,typeid,ver string) (data []Sum) {
+func (c *Con) Sum(month, typeid, ver string) (data []Sum) {
 	db := c.DB
 	var sb strings.Builder
 	para := ""

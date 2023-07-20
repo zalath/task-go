@@ -10,6 +10,58 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func Keylist(id string) []dbt.Key {
+	db := newdb()
+	data := db.Keylist(id, "list")
+	return data
+}
+
+func Keynew(name, val, pid string) (res string) {
+	db := newdb()
+	data := formKey(name, val, pid, db)
+	isdone, id := db.Keynew(data)
+	if !isdone {
+		res = "mis"
+	}
+	return strconv.Itoa(int(id))
+}
+
+func KeyGet(id string) (key dbt.Key) {
+	db := newdb()
+	key = db.Keyget(id)
+	return
+}
+func Keyupdate(id, val, col string) (isdone string) {
+	db := newdb()
+	isdone = "done"
+	if !db.Keyupdate(id, val, col) {
+		isdone = "mis"
+	}
+	return
+}
+
+func KeyDel(id string) (isdone string) {
+	isdone = "done"
+	db := newdb()
+	if !db.Keydel(id) {
+		isdone = "mis"
+	}
+	return
+}
+
+func formKey(name, val, pid string, db *dbt.Con) (key dbt.Key) {
+	key.Name = name
+	key.Pid, _ = strconv.Atoi(pid)
+	key.Val = val
+	if key.Pid == 0 {
+		key.P = ","
+	} else {
+		p := db.Keyget(pid)
+		key.P = fmt.Sprintf("%s%s,", p.P, pid)
+	}
+	return key
+}
+
 //List return direct child of selected node
 func List(id, etype, tik string) []dbt.El {
 	db := newdb()
@@ -109,6 +161,7 @@ func GetEl(id string) dbt.El {
 	defer db.DB.Close()
 	return res
 }
+
 //find a list of els
 func Find(key string) []dbt.El {
 	db := newdb()
@@ -116,6 +169,7 @@ func Find(key string) []dbt.El {
 	defer db.DB.Close()
 	return res
 }
+
 //Save submit saving element
 func Save(id, val, col string) string {
 	db := newdb()

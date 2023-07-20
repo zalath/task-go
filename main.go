@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"tasktask/src/buy"
 	"tasktask/src/el"
 	"tasktask/src/file"
@@ -12,12 +14,12 @@ import (
 	dbm "tasktask/src/sqlitem"
 	dbn "tasktask/src/sqliten"
 	"time"
-	"os"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 )
+
 var istest = false
+
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
@@ -33,7 +35,7 @@ func main() {
 	//--test end--------
 	if istest {
 		r.StaticFS("/f", http.Dir("./pic"))
-	} else {	
+	} else {
 		pathp, _ := os.Executable()
 		path := filepath.Dir(pathp) + "/../storage/dcim/taskres/"
 		r.StaticFS("/f", http.Dir(path))
@@ -67,6 +69,13 @@ func main() {
 	r.POST("/space", space)
 	r.POST("/del", del)
 	r.POST("/find", find)
+
+	r.POST("/keylist", keylist)
+	r.POST("/keynew", keynew)
+	r.POST("/keydel", keydel)
+	r.POST("/keyupdate", keyupdate)
+	r.POST("/keyget", keyget)
+	r.GET("/keytest", keytest)
 
 	// get file upload
 	r.POST("/fupload", fupload)
@@ -220,6 +229,58 @@ func find(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func keylist(c *gin.Context) {
+	id := c.PostForm("id")
+	res := el.Keylist(id)
+	c.JSON(http.StatusOK, res)
+}
+
+func keynew(c *gin.Context) {
+	res := el.Keynew(c.PostForm("name"), c.PostForm("val"), c.PostForm("pid"))
+	c.JSON(http.StatusOK, res)
+}
+
+func keydel(c *gin.Context) {
+	id := c.PostForm("id")
+	res := el.KeyDel(id)
+	c.JSON(http.StatusOK, res)
+}
+
+func keyupdate(c *gin.Context) {
+	id := c.PostForm("id")
+	name := c.PostForm("name")
+	val := c.PostForm("val")
+	res := el.Keyupdate(id, name, "name")
+	if res == "done" {
+		res = el.Keyupdate(id, val, "val")
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func keyget(c *gin.Context) {
+	id := c.PostForm("id")
+	res := el.KeyGet(id)
+	c.JSON(http.StatusOK, res)
+}
+
+func keytest(c *gin.Context) {
+	id := el.Keynew("tnode", "tval", "0")
+	fmt.Println(id)
+	fmt.Println("new ready")
+	res1 := el.Keylist("0")
+	fmt.Println(res1)
+	fmt.Println("list ready")
+	res2 := el.Keyupdate(id, "tn1", "name")
+	fmt.Println("update" + id)
+	fmt.Println(res2)
+	res := el.KeyGet(id)
+	fmt.Println(res)
+	fmt.Println("get ready")
+	res4 := el.KeyDel(id)
+	fmt.Println("del" + id)
+	fmt.Println(res4)
+}
+
 func setTest(v string) {
 	istest = true
 	dbm.Istest = true
@@ -230,7 +291,7 @@ func setTest(v string) {
 
 func fupload(c *gin.Context) {
 	res := file.Del(c)
-	res = file.Upload(c)	
+	res = file.Upload(c)
 	c.JSON(http.StatusOK, res)
 }
 func fdel(c *gin.Context) {
