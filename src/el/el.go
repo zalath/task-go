@@ -10,15 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Keylist(id string) []dbt.Key {
+func Keylist() []dbt.Key {
 	db := newdb()
-	data := db.Keylist(id, "list")
+	data := db.Keylist()
 	return data
 }
 
-func Keynew(name, val, pid string) (res string) {
+func Keynew(name, val string) (res string) {
 	db := newdb()
-	data := formKey(name, val, pid, db)
+	data := formKey(name, val, db)
 	isdone, id := db.Keynew(data)
 	if !isdone {
 		res = "mis"
@@ -31,6 +31,13 @@ func KeyGet(id string) (key dbt.Key) {
 	key = db.Keyget(id)
 	return
 }
+
+func KeyGetByName(name string) (key dbt.Key) {
+	db := newdb()
+	key = db.Keygetbyname(name)
+	return
+}
+
 func Keyupdate(id, val, col string) (isdone string) {
 	db := newdb()
 	isdone = "done"
@@ -49,16 +56,9 @@ func KeyDel(id string) (isdone string) {
 	return
 }
 
-func formKey(name, val, pid string, db *dbt.Con) (key dbt.Key) {
+func formKey(name, val string, db *dbt.Con) (key dbt.Key) {
 	key.Name = name
-	key.Pid, _ = strconv.Atoi(pid)
 	key.Val = val
-	if key.Pid == 0 {
-		key.P = ","
-	} else {
-		p := db.Keyget(pid)
-		key.P = fmt.Sprintf("%s%s,", p.P, pid)
-	}
 	return key
 }
 

@@ -75,6 +75,7 @@ func main() {
 	r.POST("/keydel", keydel)
 	r.POST("/keyupdate", keyupdate)
 	r.POST("/keyget", keyget)
+	r.POST("/keygetbyname", keygetbyname)
 	r.GET("/keytest", keytest)
 
 	// get file upload
@@ -230,13 +231,12 @@ func find(c *gin.Context) {
 }
 
 func keylist(c *gin.Context) {
-	id := c.PostForm("id")
-	res := el.Keylist(id)
+	res := el.Keylist()
 	c.JSON(http.StatusOK, res)
 }
 
 func keynew(c *gin.Context) {
-	res := el.Keynew(c.PostForm("name"), c.PostForm("val"), c.PostForm("pid"))
+	res := el.Keynew(c.PostForm("name"), c.PostForm("val"))
 	c.JSON(http.StatusOK, res)
 }
 
@@ -263,11 +263,16 @@ func keyget(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func keygetbyname(c *gin.Context) {
+	name := c.PostForm("name")
+	res := el.KeyGetByName(name)
+	c.JSON(http.StatusOK, res)
+}
 func keytest(c *gin.Context) {
-	id := el.Keynew("tnode", "tval", "0")
+	id := el.Keynew("tnode", "tval")
 	fmt.Println(id)
 	fmt.Println("new ready")
-	res1 := el.Keylist("0")
+	res1 := el.Keylist()
 	fmt.Println(res1)
 	fmt.Println("list ready")
 	res2 := el.Keyupdate(id, "tn1", "name")
@@ -276,7 +281,7 @@ func keytest(c *gin.Context) {
 	res := el.KeyGet(id)
 	fmt.Println(res)
 	fmt.Println("get ready")
-	res4 := el.KeyDel(id)
+	res4 := el.KeyDel("tn1")
 	fmt.Println("del" + id)
 	fmt.Println(res4)
 }

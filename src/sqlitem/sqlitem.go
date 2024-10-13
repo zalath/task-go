@@ -26,7 +26,7 @@ func (c *Con) Opendb() {
 	if Istest == true {
 		path = "."
 	}
-	db, err := sqlx.Connect("sqlite3", path+"/db/db.db")
+	db, err := sqlx.Connect("sqlite3", path+"/db.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,20 +42,16 @@ func NewCon() *Con {
 
 type Key struct {
 	ID   int    `db:"id" json:"id"`
-	Pid  int    `db:"pid" json:"pid"`
 	Name string `db:"name" json:"name"`
 	Val  string `db:"val" json:"val"`
-	P    string `db:"p" json:"p"`
 }
 
 // 列出某一元素的子集
-func (c *Con) Keylist(id, etype string) []Key {
+func (c *Con) Keylist() []Key {
 	db := c.DB
 	var err error
 	var data = []Key{}
-	if etype == "list" {
-		err = db.Select(&data, "select * from key where pid = ? order by id asc", id)
-	}
+	err = db.Select(&data, "select * from key order by id asc")
 	if err != nil {
 		c.haveErr(err)
 	}
@@ -72,18 +68,28 @@ func (c *Con) Keyget(id string) Key {
 	return k
 }
 
+func (c *Con) Keygetbyname(name string) Key {
+	db := c.DB
+	k := Key{}
+	err := db.Get(&k, "select * from key where name = ?", name)
+	if err != nil {
+		c.haveErr(err)
+	}
+	return k
+}
+
 // 增加新关键值内容
 func (c *Con) Keynew(key Key) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
-	stmt, err := db.Prepare("insert into key (name,pid,p,val) values(?,?,?,?)")
+	stmt, err := db.Prepare("insert into key (name,val) values(?,?)")
 	defer stmt.Close()
 	if err != nil {
 		c.haveErr(err)
 		isdone = false
 		return
 	}
-	res, er1 := stmt.Exec(key.Name, key.Pid, key.P, key.Val)
+	res, er1 := stmt.Exec(key.Name, key.Val)
 	if er1 != nil {
 		c.haveErr(er1)
 		isdone = false
@@ -94,14 +100,29 @@ func (c *Con) Keynew(key Key) (isdone bool, newid int64) {
 }
 
 // 删除关键值项
-func (c *Con) Keydel(id string) (isdone bool) {
+func (c *Con) Keydel(name string) (isdone bool) {
 	// 将本项下的所有内容都删除
-	return c.doDel(id, "key")
+	return c.doDelbyname(name)
 }
 
 // 更新关键文件项
 func (c *Con) Keyupdate(id, val, col string) (isdone bool) {
 	return c.doUpdate(id, val, col, "key")
+}
+
+//Del delete an element by name
+func (c *Con) doDelbyname(name string) (isdone bool) {
+	isdone = true
+	db := c.DB
+	sql2 := "delete from key where name = '" + name + "'"
+	fmt.Println(sql2)
+	_, er1 := db.Exec(sql2)
+	if er1 != nil {
+		c.haveErr(er1)
+		isdone = false
+		return
+	}
+	return
 }
 
 //El ...
@@ -323,13 +344,11 @@ func (c *Con) haveErr(err error) {
 		db := c.DB
 		sql := `CREATE TABLE "key" (
 			"id" INTEGER NOT NULL,
-			"pid" INTEGER NOT NULL,
-			"p" TEXT,
 			"name" TEXT NOT NULL,
 			"val" TEXT NOT NULL,
 			PRIMARY KEY("id" ASC)
 		);
-		insert into key(id,pid,name,val) values('0','-1','','');`
+		insert into key(id,name,val) values('0','','');`
 		_, err := db.Exec(sql)
 		if err != nil {
 			log.Fatal("database error key")

@@ -27,7 +27,7 @@ func (c *Con) Opendb() {
 	if Istest == true {
 		path = "."
 	}
-	db, err := sqlx.Connect("sqlite3", path+"/db/buy.db")
+	db, err := sqlx.Connect("sqlite3", path+"/buy.db")
 	if err != nil {
 		log.Fatal(err)
 	}
