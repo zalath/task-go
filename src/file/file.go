@@ -1,12 +1,11 @@
-
 package file
 
 import (
 	"fmt"
 	"os"
-	"time"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )

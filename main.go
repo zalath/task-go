@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"tasktask/src/book"
 	"tasktask/src/buy"
 	"tasktask/src/el"
 	"tasktask/src/file"
+	"tasktask/src/knote"
 	"tasktask/src/middleware"
 	"tasktask/src/note"
 	dbb "tasktask/src/sqliteb"
+	dbbook "tasktask/src/sqlitebook"
 	dbm "tasktask/src/sqlitem"
 	dbn "tasktask/src/sqliten"
 	"time"
@@ -30,9 +33,11 @@ func main() {
 			"message": "pong",
 		})
 	})
+	//=========================================================
 	//--test start--测试环境打开本行，调整数据库位置
-	setTest("test")
+	// setTest("test")
 	//--test end--------
+	//=========================================================
 	if istest {
 		r.StaticFS("/f", http.Dir("./pic"))
 	} else {
@@ -77,6 +82,23 @@ func main() {
 	r.POST("/keyget", keyget)
 	r.POST("/keygetbyname", keygetbyname)
 	r.GET("/keytest", keytest)
+
+	r.POST("/setknote", setknote)
+	r.GET("/readknote", readknote)
+	r.POST("/setkeyfile", setkeyfile)
+	r.GET("/readkeyfile", readkeyfile)
+
+	r.GET("/booklist", booklist)                              //书籍列表
+	r.POST("/bookparts", bookparts)                           //节点列表
+	r.POST("/booknewpart", booknewpart)                       //新建
+	r.POST("/bookdelpart", bookdelpart)                       //删除
+	r.POST("/bookupdatepart", bookupdatepart)                 //更新
+	r.POST("/bookupdateorder", bookupdateorder)               //更新顺序
+	r.POST("/bookgetrelationtype", bookgetrelationtype)       //获取关系类型列表
+	r.POST("/bookcreaterelationtype", bookcreaterelationtype) //创建关系类型
+	r.POST("/bookdelrelationtype", bookdelrelationtype)       //删除关系类型
+	r.POST("/bookdelrelation", bookdelrelation)               //删除关系
+	r.POST("/bookmakerelation", bookmakerelation)             //创建关系
 
 	// get file upload
 	r.POST("/fupload", fupload)
@@ -292,6 +314,8 @@ func setTest(v string) {
 	dbn.Istest = true
 	dbb.Istest = true
 	file.Istest = true
+	knote.Istest = true
+	dbbook.Istest = true
 }
 
 func fupload(c *gin.Context) {
@@ -301,5 +325,85 @@ func fupload(c *gin.Context) {
 }
 func fdel(c *gin.Context) {
 	res := file.Del(c)
+	c.JSON(http.StatusOK, res)
+}
+
+func readknote(c *gin.Context) {
+	res := knote.Read()
+	c.JSON(http.StatusOK, res)
+}
+
+func setknote(c *gin.Context) {
+	res := knote.Set(c.PostForm("content"))
+	c.JSON(http.StatusOK, res)
+}
+
+func readkeyfile(c *gin.Context) {
+	res := knote.Readkeyfile()
+	c.JSON(http.StatusOK, res)
+}
+
+func setkeyfile(c *gin.Context) {
+	res := knote.Setkeyfile(c.PostForm("content"))
+	c.JSON(http.StatusOK, res)
+}
+
+// 书籍部分
+func booklist(c *gin.Context) {
+	res := book.GetRoot()
+	c.JSON(http.StatusOK, res)
+}
+
+func bookparts(c *gin.Context) {
+	id := c.PostForm("id")
+	res := book.GetParts(id)
+	c.JSON(http.StatusOK, res)
+}
+
+func bookupdatepart(c *gin.Context) {
+	res := book.UpdatePart(c)
+	c.JSON(http.StatusOK, res)
+}
+
+func bookdelpart(c *gin.Context) {
+	res := book.DeletePart(c.PostForm("id"))
+	c.JSON(http.StatusOK, res)
+}
+
+func booknewpart(c *gin.Context) {
+	res := book.AddPart(c.PostForm("name"), c.PostForm("desc"), c.PostForm("pic"), c.PostForm("age"), c.PostForm("type"), c.PostForm("p1"), c.PostForm("relationid"), c.PostForm("relationpos"))
+	c.JSON(http.StatusOK, res)
+}
+
+func bookupdateorder(c *gin.Context) {
+	res := book.UpdateOrder(c.PostForm("id"), c.PostForm("order"))
+	c.JSON(http.StatusOK, res)
+}
+
+func bookgetrelationtype(c *gin.Context) {
+	res := book.GetRelationType(c.PostForm("bookid"))
+	c.JSON(http.StatusOK, res)
+}
+
+func bookcreaterelationtype(c *gin.Context) {
+	res, rt := book.CreateRelationType(c.PostForm("name"), c.PostForm("revname"), c.PostForm("bookid"))
+	if res {
+		c.JSON(http.StatusOK, rt)
+	} else {
+		c.JSON(http.StatusOK, "mis")
+	}
+}
+func bookdelrelationtype(c *gin.Context) {
+	res := book.DeleteRelationType(c.PostForm("id"))
+	c.JSON(http.StatusOK, res)
+}
+
+func bookdelrelation(c *gin.Context) {
+	res := book.DeleteRelation(c.PostForm("p1"), c.PostForm("p2"))
+	c.JSON(http.StatusOK, res)
+}
+
+func bookmakerelation(c *gin.Context) {
+	res := book.Makerelation(c.PostForm("p1"), c.PostForm("p2"), c.PostForm("relationid"))
 	c.JSON(http.StatusOK, res)
 }
