@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3" //sqlite3
@@ -24,7 +25,7 @@ func (c *Con) Opendb() {
 	if Istest == true {
 		path = "."
 	}
-	db, err := sqlx.Connect("sqlite3", path+"/book.db")
+	db, err := sqlx.Connect("sqlite3", path+"/db/book.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,50 +39,64 @@ func NewCon() *Con {
 }
 
 type Part struct {
-	ID    int    `db:"id" json:"id"`
-	Name  string `db:"name" json:"name"`
-	Age   int    `db:"age" json:"age"`
-	Desc  string `db:"desc" json:"desc"`
-	Order int    `db:"order" json:"order"`
-	Type  int    `db:"type" json:"type"`
-	Pct   int    `db:"pct" json:"pct"`
-	Pic   string `db:"pic" json:"pic"`
+	ID   int    `db:"id" json:"id"`
+	Name string `db:"name" json:"name"`
+	Age  int    `db:"age" json:"age"`
+	Desc string `db:"desc" json:"desc"`
+	Type int    `db:"type" json:"type"`
+	Pct  int    `db:"pct" json:"pct"`
+	Pic  string `db:"pic" json:"pic"`
 }
 
-// 继承Part，并添加额外的属性
-type PartR struct {
-	Part
-	Relationname string `db:"relationname" json:"relationname"`
+type PartPs struct {
+	ID   int    `db:"id" json:"id"`
+	Name string `db:"name" json:"name"`
+	Age  int    `db:"age" json:"age"`
+	Desc string `db:"desc" json:"desc"`
+	Type int    `db:"type" json:"type"`
+	Pct  int    `db:"pct" json:"pct"`
+	Pic  string `db:"pic" json:"pic"`
+
+	Relationid string `db:"relationid" json:"relationid"`
+}
+
+type Relation struct {
+	ID         int `db:"id" json:"id"`
+	P1         int `db:"p1" json:"p1"`
+	P2         int `db:"p2" json:"p2"`
+	RelationID int `db:"relationid" json:"relationid"`
+	Direction  int `db:"direction" json:"direction"`
+	Sort       int `db:"sort" json:"sort"`
+}
+
+type RelationType struct {
+	ID      int    `db:"id" json:"id"`
+	Name    string `db:"name" json:"name"`
+	RevName string `db:"revname" json:"revname"`
+	Bookid  int    `db:"bookid" json:"bookid"`
 }
 
 // 获取书籍节点
-func (c *Con) Partlist() []Part {
+func (c *Con) List() []Part {
 	db := c.DB
 	var err error
 	var data = []Part{}
-	err = db.Select(&data, "select * from part where type = 0 order by `order` asc")
+	err = db.Select(&data, "select * from part where type = 0 order by id desc")
 	if err != nil {
 		c.haveErr(err)
 	}
 	return data
 }
 
-// 通过父级节点，获取子节点列表
-func (c *Con) Parts(id int) []PartR {
+// 通过书籍父节点，获取本书所有子节点
+func (c *Con) Parts(id string) []Part {
 	db := c.DB
-	p1 := []PartR{}
-	err := db.Get(&p1, "select p.*,rt.name as relationname from relation r join part p on r.p2=p.id join relationtype rt on r.relationid = rt.id where r.p1 = ?", id)
+	p1 := []Part{}
+	err := db.Select(&p1, "select p.* from relation r join part p on r.p2=p.id  where r.p1 = ?", id)
 	if err != nil {
 		c.haveErr(err)
 	}
-	p2 := []PartR{}
-	err = db.Get(&p2, "select p.*,rt.revname as relationname from relation r join part p on r.p1=p.id join relationtype rt on r.relationid = rt.id where r.p2 = ?", id)
-	if err != nil {
-		c.haveErr(err)
-	}
-	// 合并两个切片，并返回一个新的切片
-	p := append(p1, p2...)
-	return p
+	return p1
 }
 
 // 按照struct Part的所有项目更新节点内容
@@ -128,77 +143,41 @@ func (c *Con) DeletePart(id int) bool {
 // relationid 关系类型
 // relationpos 1为正向关系（p1->id)，2为反向关系（id->p1)
 
-func (c *Con) AddPart(p Part, p1, relationid, relationpos string) Part {
+func (c *Con) AddPart(p PartPs, bookid string) PartPs {
 	// 插入节点，并根据新id和P1插入relation表
 	db := c.DB
 	tx, err := db.Begin()
 	if err != nil {
 		c.haveErr(err)
 	}
-	res, err := tx.Exec("insert into part (`name`,`age`,`desc`,`pic`,`type`,`pct`) values (?,?,?,?,?,0)", p.Name, p.Age, p.Desc, p.Pic, p.Type)
+	res, err := tx.Exec("insert into part (`name`,`age`,`desc`,`pic`,`type`,`pct`) values (?,?,?,?,?,?)", p.Name, p.Age, p.Desc, p.Pic, p.Type, p.Pct)
 	if err != nil {
 		tx.Rollback()
 		c.haveErr(err)
 	}
 	id, _ := res.LastInsertId()
-
-	if relationpos == "1" {
-		err = c.Makerelationsql(tx, p1, strconv.FormatInt(id, 10), relationid)
-	} else {
-		err = c.Makerelationsql(tx, strconv.FormatInt(id, 10), p1, relationid)
-	}
-	if err != nil {
+	p.ID = int(id)
+	idStr := strconv.FormatInt(id, 10)
+	// 将节点归到书目下
+	rid := c.Makerelationsql(tx, bookid, idStr, strconv.Itoa(p.Type), "1")
+	if rid == 0 {
 		tx.Rollback()
 		c.haveErr(err)
 	}
+
 	err = tx.Commit()
 	if err != nil {
 		c.haveErr(err)
 	}
-	p.ID = int(id)
+
+	p.Relationid = strconv.Itoa(rid)
 	return p
 }
 
-// 更新书籍节点顺序
-func (c *Con) UpdateOrder(id, order string) bool {
-	// 更新表中的order，使对应的id的order变为新的值, 同时将order等于或者大于该值的order值加1
-	db := c.DB
-	tx, err := db.Begin()
-	if err != nil {
-		c.haveErr(err)
-		return false
-	}
-	_, err = tx.Exec("update part set `order`=`order`+1 where `order`>=?", order)
-	if err != nil {
-		tx.Rollback()
-		c.haveErr(err)
-		return false
-	}
-	_, err = tx.Exec("update part set `order`=? where id=?", order, id)
-	if err != nil {
-		tx.Rollback()
-		c.haveErr(err)
-		return false
-	}
-	err = tx.Commit()
-	if err != nil {
-		c.haveErr(err)
-		return false
-	}
-	return true
-}
-
-type Relation struct {
-	ID      int    `db:"id",json:"id"`
-	Name    string `db:"name",json:"name"`
-	RevName string `db:"revname",json:"revname"`
-	Bookid  int    `db:"bookid",json:"bookid"`
-}
-
 // 查询关系类型表
-func (c *Con) GetRelationType(bookid string) []Relation {
+func (c *Con) GetRelationType(bookid string) []RelationType {
 	db := c.DB
-	var rt []Relation
+	var rt []RelationType
 	err := db.Select(&rt, "select id,name,revname,bookid from relationtype where bookid=? order by id asc", bookid)
 	if err != nil {
 		c.haveErr(err)
@@ -255,26 +234,14 @@ func (c *Con) DeleteRelationType(id string) bool {
 	return true
 }
 
-// 删除关系表记录
-func (c *Con) DeleteRelation(p1, p2 string) bool {
-	db := c.DB
-	_, err := db.Exec("delete from relation where (p1=? and p2=?) or (p1=? and p2=?)", p1, p2, p2, p1)
-	if err != nil {
-		c.haveErr(err)
-		return false
-	}
-	return true
-}
-
-// 创建关系表记录
-func (c *Con) Makerelation(p1, p2, relationid string) bool {
+func (c *Con) UpdateRelationType(id, name, revname string) bool {
 	db := c.DB
 	tx, err := db.Begin()
 	if err != nil {
 		c.haveErr(err)
 		return false
 	}
-	err = c.Makerelationsql(tx, p1, p2, relationid)
+	_, err = tx.Exec("update relationtype set name=?,revname=? where id=?", name, revname, id)
 	if err != nil {
 		tx.Rollback()
 		c.haveErr(err)
@@ -287,11 +254,133 @@ func (c *Con) Makerelation(p1, p2, relationid string) bool {
 	}
 	return true
 }
-func (c *Con) Makerelationsql(tx *sql.Tx, p1, p2, relationid string) error {
-	_, err := tx.Exec("insert into relation (p1,p2,relationid) values (?,?,?)", p1, p2, relationid)
-	return err
+
+// 通过父级节点，获得关系列表
+func (c *Con) PartRelationList(p1, relationid, p2 string) []Relation {
+	db := c.DB
+	p := []Relation{}
+	query := "select * from relation where 1=1"
+	args := []interface{}{}
+	var orParts []string
+	if p1 != "0" {
+		orParts = append(orParts, "p1 = ?")
+		args = append(args, p1)
+	}
+	if p2 != "0" {
+		orParts = append(orParts, "p2 = ?")
+		args = append(args, p2)
+	}
+	if len(orParts) > 0 {
+		query += " AND (" + strings.Join(orParts, " OR ") + ")"
+	}
+	if relationid == "0" {
+		query += " AND relationid <> ?"
+		args = append(args, 2)
+	} else {
+		query += " AND relationid = ?"
+		args = append(args, relationid)
+	}
+	query += " ORDER BY sort ASC"
+	err := db.Select(&p, query, args...)
+	if err != nil {
+		c.haveErr(err)
+	}
+	return p
 }
 
+func (c *Con) PartRelationMap(bookid string) []Relation {
+	db := c.DB
+	p1list := []Relation{}
+	var err error
+	err = db.Select(&p1list, "select r.* from relation r left outer join relationtype rt on r.relationid = rt.id where r.relationid > 2 and rt.bookid=?", bookid)
+	if err != nil {
+		c.haveErr(err)
+	}
+	return p1list
+}
+
+// 删除关系表记录
+func (c *Con) DeleteRelation(id string) bool {
+	db := c.DB
+	_, err := db.Exec("delete from relation where id=?", id)
+	if err != nil {
+		c.haveErr(err)
+		return false
+	}
+	return true
+}
+
+// 创建关系表记录
+func (c *Con) Makerelation(p1, p2, relationid, direction string) bool {
+	db := c.DB
+	tx, err := db.Begin()
+	if err != nil {
+		c.haveErr(err)
+		return false
+	}
+	id := c.Makerelationsql(tx, p1, p2, relationid, direction)
+	if id == 0 {
+		tx.Rollback()
+		c.haveErr(err)
+		return false
+	}
+	err = tx.Commit()
+	if err != nil {
+		c.haveErr(err)
+		return false
+	}
+	return true
+}
+func (c *Con) Makerelationsql(tx *sql.Tx, p1, p2, relationid, direction string) int {
+	sql, err := tx.Exec("insert into relation (p1,p2,relationid,direction) values (?,?,?,?)", p1, p2, relationid, direction)
+	if err != nil {
+		c.haveErr(err)
+		return 0
+	}
+	id, _ := sql.LastInsertId()
+	_, err = tx.Exec("update relation set sort=? where id=?", id, id)
+	if err != nil {
+		c.haveErr(err)
+		return 0
+	}
+	return int(id)
+}
+
+// 更新节点关系的顺序
+func (c *Con) PartRelationSetOrder(id, order string) bool {
+	// 更新表中的order，使对应的id的order变为新的值, 同时将order等于或者大于该值的order值加1
+	db := c.DB
+	tx, err := db.Begin()
+	if err != nil {
+		c.haveErr(err)
+		return false
+	}
+	var currentSort int
+	err = db.Get(&currentSort, "SELECT sort FROM relation WHERE id = ?", id)
+	if err != nil {
+		c.haveErr(err)
+		return false
+	}
+	// 获取id对应的那行数据，将里面的sort作为最大值，下面这条更新仅更新从参数order到最大值之间的数据
+	_, err = tx.Exec("update relation set `sort`=`sort`+1 where `sort`>=? and `sort`<?", order, currentSort)
+	if err != nil {
+		tx.Rollback()
+		c.haveErr(err)
+		return false
+	}
+	_, err = tx.Exec("update relation set `sort`=? where id=?", order, id)
+	if err != nil {
+		tx.Rollback()
+		c.haveErr(err)
+		return false
+	}
+	err = tx.Commit()
+	if err != nil {
+		c.haveErr(err)
+		return false
+	}
+	return true
+}
 func (c *Con) haveErr(err error) {
 	if err.Error() == "no such table: part" {
 		db := c.DB
@@ -299,9 +388,8 @@ func (c *Con) haveErr(err error) {
 			"id"  INTEGER NOT NULL,
 			"name"  TEXT NOT NULL,
 			"age"  INTEGER NOT NULL,
-      "desc"  TEXT NOT NULL,
-			"order"  INTEGER NOT NULL,
-      "type"  INTEGER NOT NULL,
+      		"desc"  TEXT NOT NULL,
+      		"type"  INTEGER NOT NULL,
 			"pct"  INTEGER NOT NULL DEFAULT 0,
 			"pic" TEXT,`
 		_, err := db.Exec(sql)
@@ -311,11 +399,12 @@ func (c *Con) haveErr(err error) {
 		}
 	} else if err.Error() == "no such table: relation" {
 		db := c.DB
-		sql := `CREATE TABLE "part" (
+		sql := `CREATE TABLE "relation" (
 			"id"  INTEGER NOT NULL,
+			"p1"  INTEGER NOT NULL,
+			"relationid"  INTEGER NOT NULL,
 			"p2"  INTEGER NOT NULL,
-      "relationid"  INTEGER NOT NULL,
-      "p2"  INTEGER NOT NULL`
+			"sort" INTEGER NOT NULL`
 		_, err := db.Exec(sql)
 		if err != nil {
 			log.Fatal("database error e")
@@ -323,17 +412,18 @@ func (c *Con) haveErr(err error) {
 		}
 	} else if err.Error() == "no such table: relationtype" {
 		db := c.DB
-		sql := `CREATE TABLE "part" (
+		sql := `CREATE TABLE "relaitontype" (
 			"id"  INTEGER NOT NULL,
 			"name"  TEXT NOT NULL,
-      "revname"  TEXT NOT NULL,
-      "bookid"  INTEGER NOT NULL`
+			"revname"  TEXT NOT NULL,
+			"bookid"  INTEGER NOT NULL`
 		_, err := db.Exec(sql)
 		if err != nil {
 			log.Fatal("database error e")
 			return
 		}
 	} else if err != nil {
+		log.Println("have error !")
 		log.Println(err)
 	}
 }

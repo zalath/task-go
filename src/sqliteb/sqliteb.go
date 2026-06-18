@@ -20,28 +20,28 @@ type Con struct {
 	DB *sqlx.DB
 }
 
-//Opendb ...
+// Opendb ...
 func (c *Con) Opendb() {
 	pathp, _ := os.Executable()
 	path := filepath.Dir(pathp)
 	if Istest == true {
 		path = "."
 	}
-	db, err := sqlx.Connect("sqlite3", path+"/buy.db")
+	db, err := sqlx.Connect("sqlite3", path+"/db/buy.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	c.DB = db
 }
 
-//NewCon ...
+// NewCon ...
 func NewCon() *Con {
 	var c = new(Con)
 	c.Opendb()
 	return c
 }
 
-//buy ...
+// buy ...
 type Buy struct {
 	ID       int     `db:"id" json:"id"`
 	T        string  `db:"t" json:"t"`
@@ -58,7 +58,7 @@ type Buy struct {
 	Innout   string  `db:"innout" json:"innout"`     //in or out state
 }
 
-//type ...
+// type ...
 type Clas struct {
 	ID    int     `db:"id" json:"id"`
 	Name  string  `db:"name" json:"name"`

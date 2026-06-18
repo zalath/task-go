@@ -1,14 +1,19 @@
 package knote
 
 import (
+	// "fmt"
 	"os"
 	"path/filepath"
 )
 
 var Istest = false
 
+var path = "/db/knote"
+
+var confpath = "/conf/"
+
 func Read() string {
-	return readfile("/knote")
+	return readfile(path)
 }
 
 func readfile(filename string) string {
@@ -29,7 +34,7 @@ func readfile(filename string) string {
 func getpath(filename string) string {
 	pathp, _ := os.Executable()
 	path := filepath.Dir(pathp)
-	if Istest == true {
+	if Istest {
 		path = "."
 	}
 	path += filename
@@ -41,7 +46,7 @@ func getpath(filename string) string {
 	return path
 }
 func Set(content string) bool {
-	return setfile(content, "/knote")
+	return setfile(content, path)
 }
 func setfile(content, filename string) bool {
 	path := getpath(filename)
@@ -51,7 +56,7 @@ func setfile(content, filename string) bool {
 	}
 	defer file.Close()
 
-	err = os.WriteFile(path, []byte(content), 755)
+	err = os.WriteFile(path, []byte(content), 0755)
 	if err != nil {
 		panic(err)
 	}
@@ -62,4 +67,45 @@ func Readkeyfile() string {
 }
 func Setkeyfile(content string) bool {
 	return setfile(content, "/keyfile")
+}
+
+// 服务器配置文件部分-------------------------------------
+//
+// 获取配置文件的列表
+func Conffilelist() []string {
+	// 正则表达式匹配指定目录中所有以'conf-'开头的文件
+	// fmt.Println(confpath + "conf-*")
+	pathp, _ := os.Executable()
+	path := filepath.Dir(pathp)
+	if Istest {
+		path = "."
+	}
+	path += confpath
+	pattern := filepath.Join(path, "conf-*")
+	files, err := filepath.Glob(pattern)
+
+	// fmt.Println(files)
+	if err != nil {
+		panic(err)
+	}
+	
+	re := make([]string, 0)
+	for _, file := range files {
+		filename := filepath.Base(file)
+		if len(filename) > 5 {
+			re = append(re, filename[5:])
+		}
+	}
+
+	return re
+}
+
+// 读取指定的配置文件的内容
+func Getconffile(filename string) string {
+	return readfile(confpath + "conf-" + filename)
+}
+
+// 将配置内容写入配置文件
+func Setconffile(content, filename string) bool {
+	return setfile(content, confpath+"conf-"+filename)
 }

@@ -35,7 +35,7 @@ func main() {
 	})
 	//=========================================================
 	//--test start--测试环境打开本行，调整数据库位置
-	// setTest("test")
+	setTest("test")
 	//--test end--------
 	//=========================================================
 	if istest {
@@ -45,6 +45,7 @@ func main() {
 		path := filepath.Dir(pathp) + "/../storage/dcim/taskres/"
 		r.StaticFS("/f", http.Dir(path))
 	}
+	// 账单
 	r.POST("/bList", bList)
 	r.POST("/bBuy", bBuy)
 	r.POST("/bClas", bClas)
@@ -54,7 +55,7 @@ func main() {
 	r.POST("/bSumMonth", bSumMonth)
 	r.POST("/bSumType", bSumType)
 	r.POST("/bCsv", bCsv)
-
+	// 笔记
 	r.POST("/nlist", nlist)
 	r.POST("/nel", ngetel)
 	r.POST("/nnew", nnew)
@@ -64,7 +65,7 @@ func main() {
 	r.POST("/nspace", nspace)
 	r.POST("/ndel", ndel)
 	r.POST("/nfind", nfind)
-
+	// 任务
 	r.POST("/list", list)
 	r.POST("/el", getel)
 	r.POST("/new", new)
@@ -74,7 +75,7 @@ func main() {
 	r.POST("/space", space)
 	r.POST("/del", del)
 	r.POST("/find", find)
-
+	// 关键信息
 	r.POST("/keylist", keylist)
 	r.POST("/keynew", keynew)
 	r.POST("/keydel", keydel)
@@ -82,23 +83,30 @@ func main() {
 	r.POST("/keyget", keyget)
 	r.POST("/keygetbyname", keygetbyname)
 	r.GET("/keytest", keytest)
-
+	// 快速笔记
 	r.POST("/setknote", setknote)
 	r.GET("/readknote", readknote)
 	r.POST("/setkeyfile", setkeyfile)
 	r.GET("/readkeyfile", readkeyfile)
-
+	// 配置
+	r.GET("/conflist", Conflist)
+	r.POST("/getconffile", Getconffile)
+	r.POST("/setconffile", Setconffile)
+	// 书
 	r.GET("/booklist", booklist)                              //书籍列表
 	r.POST("/bookparts", bookparts)                           //节点列表
 	r.POST("/booknewpart", booknewpart)                       //新建
 	r.POST("/bookdelpart", bookdelpart)                       //删除
 	r.POST("/bookupdatepart", bookupdatepart)                 //更新
-	r.POST("/bookupdateorder", bookupdateorder)               //更新顺序
+	r.POST("/bookrelationsetorder", bookrelationsetorder)     //更新顺序
 	r.POST("/bookgetrelationtype", bookgetrelationtype)       //获取关系类型列表
 	r.POST("/bookcreaterelationtype", bookcreaterelationtype) //创建关系类型
 	r.POST("/bookdelrelationtype", bookdelrelationtype)       //删除关系类型
+	r.POST("/bookupdaterelationtype", bookupdaterelationtype) //更新关系类型
 	r.POST("/bookdelrelation", bookdelrelation)               //删除关系
 	r.POST("/bookmakerelation", bookmakerelation)             //创建关系
+	r.POST("/bookpartrelationlist", bookpartrelationlist)     //节点关系列表
+	r.POST("/bookpartrelationmap", bookpartrelationmap)       //节点关系地图
 
 	// get file upload
 	r.POST("/fupload", fupload)
@@ -147,6 +155,10 @@ func bCsv(c *gin.Context) {
 func nlist(c *gin.Context) {
 	id := c.PostForm("id")
 	tik := c.PostForm("tik")
+	fmt.Println("in")
+	fmt.Println(id)
+	fmt.Println(tik)
+	fmt.Println("ok")
 	res := note.List(id, "list", tik)
 	c.JSON(http.StatusOK, res)
 }
@@ -348,18 +360,51 @@ func setkeyfile(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func Conflist(c *gin.Context) {
+	res := knote.Conffilelist()
+	c.JSON(http.StatusOK, res)
+}
+
+func Getconffile(c *gin.Context) {
+	res := knote.Getconffile(c.PostForm("filename"))
+	c.JSON(http.StatusOK, res)
+}
+
+func Setconffile(c *gin.Context) {
+	res := knote.Setconffile(c.PostForm("content"), c.PostForm("filename"))
+	c.JSON(http.StatusOK, res)
+}
+
 // 书籍部分
 func booklist(c *gin.Context) {
-	res := book.GetRoot()
+	res := book.List()
 	c.JSON(http.StatusOK, res)
 }
 
 func bookparts(c *gin.Context) {
 	id := c.PostForm("id")
-	res := book.GetParts(id)
+	res := book.Parts(id)
 	c.JSON(http.StatusOK, res)
 }
 
+func bookpartrelationlist(c *gin.Context) {
+	p1 := c.PostForm("p1")
+	relationid := c.PostForm("relationid")
+	p2 := c.PostForm("p2")
+	res := book.PartRelationList(p1, relationid, p2)
+	c.JSON(http.StatusOK, res)
+}
+
+func bookpartrelationmap(c *gin.Context) {
+	bookid := c.PostForm("bookid")
+	res := book.PartRelationMap(bookid)
+	c.JSON(http.StatusOK, res)
+}
+
+func bookrelationsetorder(c *gin.Context) {
+	res := book.PartRelationSetOrder(c.PostForm("id"), c.PostForm("order"))
+	c.JSON(http.StatusOK, res)
+}
 func bookupdatepart(c *gin.Context) {
 	res := book.UpdatePart(c)
 	c.JSON(http.StatusOK, res)
@@ -371,13 +416,16 @@ func bookdelpart(c *gin.Context) {
 }
 
 func booknewpart(c *gin.Context) {
-	res := book.AddPart(c.PostForm("name"), c.PostForm("desc"), c.PostForm("pic"), c.PostForm("age"), c.PostForm("type"), c.PostForm("p1"), c.PostForm("relationid"), c.PostForm("relationpos"))
-	c.JSON(http.StatusOK, res)
-}
-
-func bookupdateorder(c *gin.Context) {
-	res := book.UpdateOrder(c.PostForm("id"), c.PostForm("order"))
-	c.JSON(http.StatusOK, res)
+	fmt.Println(c.PostForm("name"))
+	partps := book.AddPart(c.PostForm("name"),
+		c.PostForm("desc"),
+		c.PostForm("pic"),
+		c.PostForm("age"),
+		c.PostForm("type"),
+		"0",
+		c.PostForm("bookid"),
+	)
+	c.JSON(http.StatusOK, partps)
 }
 
 func bookgetrelationtype(c *gin.Context) {
@@ -397,13 +445,17 @@ func bookdelrelationtype(c *gin.Context) {
 	res := book.DeleteRelationType(c.PostForm("id"))
 	c.JSON(http.StatusOK, res)
 }
+func bookupdaterelationtype(c *gin.Context) {
+	res := book.UpdateRelationType(c.PostForm("id"), c.PostForm("name"), c.PostForm("revname"))
+	c.JSON(http.StatusOK, res)
+}
 
 func bookdelrelation(c *gin.Context) {
-	res := book.DeleteRelation(c.PostForm("p1"), c.PostForm("p2"))
+	res := book.DeleteRelation(c.PostForm("id"))
 	c.JSON(http.StatusOK, res)
 }
 
 func bookmakerelation(c *gin.Context) {
-	res := book.Makerelation(c.PostForm("p1"), c.PostForm("p2"), c.PostForm("relationid"))
+	res := book.Makerelation(c.PostForm("p1"), c.PostForm("p2"), c.PostForm("relationid"), c.PostForm("direction"))
 	c.JSON(http.StatusOK, res)
 }

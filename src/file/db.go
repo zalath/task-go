@@ -1,0 +1,4 @@
+package file
+
+func AsyncDB() {
+}

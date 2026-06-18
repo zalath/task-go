@@ -19,21 +19,21 @@ type Con struct {
 	DB *sqlx.DB
 }
 
-//Opendb ...
+// Opendb ...
 func (c *Con) Opendb() {
 	pathp, _ := os.Executable()
 	path := filepath.Dir(pathp)
 	if Istest == true {
 		path = "."
 	}
-	db, err := sqlx.Connect("sqlite3", path+"/db.db")
+	db, err := sqlx.Connect("sqlite3", path+"/db/db.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	c.DB = db
 }
 
-//NewCon ...
+// NewCon ...
 func NewCon() *Con {
 	var c = new(Con)
 	c.Opendb()
@@ -110,7 +110,7 @@ func (c *Con) Keyupdate(id, val, col string) (isdone bool) {
 	return c.doUpdate(id, val, col, "key")
 }
 
-//Del delete an element by name
+// Del delete an element by name
 func (c *Con) doDelbyname(name string) (isdone bool) {
 	isdone = true
 	db := c.DB
@@ -125,7 +125,7 @@ func (c *Con) doDelbyname(name string) (isdone bool) {
 	return
 }
 
-//El ...
+// El ...
 type El struct {
 	ID        int    `db:"id" json:"id"`
 	Title     string `db:"title" json:"title"`
@@ -183,7 +183,7 @@ func (c *Con) Count(id int) []Tikc {
 	return d
 }
 
-//Get select online from database on id
+// Get select online from database on id
 func (c *Con) Get(id string) El {
 	db := c.DB
 	el := El{}
@@ -207,7 +207,7 @@ func (c *Con) Find(key string) []El {
 	return els
 }
 
-//New create a new element
+// New create a new element
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
@@ -231,7 +231,7 @@ func (c *Con) Del(id string) (isdone bool) {
 	return c.doDel(id, "e")
 }
 
-//Del delete an element
+// Del delete an element
 func (c *Con) doDel(id, tablename string) (isdone bool) {
 	isdone = true
 	db := c.DB
@@ -258,7 +258,7 @@ func (c *Con) Update(id, val, col string) (isdone bool) {
 	return c.doUpdate(id, val, col, "e")
 }
 
-//Update ...
+// Update ...
 func (c *Con) doUpdate(id, val, col, table string) (isdone bool) {
 	fmt.Println("update :", table, id, col, val)
 	isdone = true
@@ -285,7 +285,7 @@ func (c *Con) doUpdate(id, val, col, table string) (isdone bool) {
 	return
 }
 
-//UpdateP ...
+// UpdateP ...
 func (c *Con) UpdateP(p, np, id string) (isdone bool) {
 	fmt.Println("update p:", p, np)
 	isdone = true

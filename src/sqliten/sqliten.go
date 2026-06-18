@@ -4,40 +4,43 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strings"
 	"os"
 	"path/filepath"
+	"strings"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3" //sqlite3
 )
+
 var Istest = false
+
 /*Con ...*/
 type Con struct {
 	DB *sqlx.DB
 }
 
-//Opendb ...
+// Opendb ...
 func (c *Con) Opendb() {
 	pathp, _ := os.Executable()
 	path := filepath.Dir(pathp)
 	if Istest == true {
 		path = "."
 	}
-	db, err := sqlx.Connect("sqlite3", path+"/note.db")
+	db, err := sqlx.Connect("sqlite3", path+"/db/note.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	c.DB = db
 }
 
-//NewCon ...
+// NewCon ...
 func NewCon() *Con {
 	var c = new(Con)
 	c.Opendb()
 	return c
 }
 
-//El ...
+// El ...
 type El struct {
 	ID        int    `db:"id" json:"id"`
 	Title     string `db:"title" json:"title"`
@@ -48,17 +51,17 @@ type El struct {
 	Begintime string `db:"begintime" json:"begintime"`
 	Endtime   string `db:"endtime" json:"endtime"`
 	Cmt       string `db:"cmt" json:"cmt"`
-	Content		string `db:"content" json:"content"`
-	File			string `db:"file" json:"file"`
-	Tikc	  []Tikc	`json:"tikc"`
+	Content   string `db:"content" json:"content"`
+	File      string `db:"file" json:"file"`
+	Tikc      []Tikc `json:"tikc"`
 	Child     interface{}
 }
 type Tikc struct {
 	Tik int `db:"tik" json:"tik"`
-	C int `db:"c" json:"c"`
+	C   int `db:"c" json:"c"`
 }
 
-//List a test
+// List a test
 func (c *Con) List(id, etype, tik string) []El {
 	db := c.DB
 	var err error
@@ -66,17 +69,17 @@ func (c *Con) List(id, etype, tik string) []El {
 	var where = ""
 	if tik != "" {
 		where = " and tik = " + tik
-	}	
+	}
 	if etype == "list" {
-		err = db.Select(&data, "select * from e where pid = ? " + where + " order by tik asc,id desc", id)
+		err = db.Select(&data, "select * from e where pid = ? "+where+" order by tik asc,id desc", id)
 	} else {
 		if id == "0" {
 			id = ","
 		}
-		err = db.Select(&data, "select * from e where p like '%'||$1||'%' " + where + "  order by tik asc,id desc", id)
+		err = db.Select(&data, "select * from e where p like '%'||$1||'%' "+where+"  order by tik asc,id desc", id)
 	}
 	for i := 0; i < len(data); i++ {
-		data[i].Tikc  = c.Count(data[i].ID)
+		data[i].Tikc = c.Count(data[i].ID)
 	}
 	if err != nil {
 		c.haveErr(err)
@@ -84,7 +87,7 @@ func (c *Con) List(id, etype, tik string) []El {
 	return data
 }
 
-//Get countings for one line
+// Get countings for one line
 func (c *Con) Count(id int) []Tikc {
 	db := c.DB
 	var d = []Tikc{}
@@ -95,7 +98,7 @@ func (c *Con) Count(id int) []Tikc {
 	return d
 }
 
-//Get select online from database on id
+// Get select online from database on id
 func (c *Con) Get(id string) El {
 	db := c.DB
 	el := El{}
@@ -114,11 +117,12 @@ func (c *Con) Find(key string) []El {
 		c.haveErr(err)
 	}
 	for i := 0; i < len(els); i++ {
-		els[i].Tikc  = c.Count(els[i].ID)
+		els[i].Tikc = c.Count(els[i].ID)
 	}
 	return els
 }
-//New create a new element
+
+// New create a new element
 func (c *Con) New(el El) (isdone bool, newid int64) {
 	isdone = true
 	db := c.DB
@@ -139,7 +143,7 @@ func (c *Con) New(el El) (isdone bool, newid int64) {
 	return
 }
 
-//Del delete an element
+// Del delete an element
 func (c *Con) Del(id string) (isdone bool) {
 	isdone = true
 	db := c.DB
@@ -158,7 +162,7 @@ func (c *Con) Del(id string) (isdone bool) {
 	return
 }
 
-//Update ...
+// Update ...
 func (c *Con) Update(id, val, col string) (isdone bool) {
 	fmt.Println("update el :", id, col, val)
 	isdone = true
@@ -183,7 +187,7 @@ func (c *Con) Update(id, val, col string) (isdone bool) {
 	return
 }
 
-//UpdateP ...
+// UpdateP ...
 func (c *Con) UpdateP(p, np, id string) (isdone bool) {
 	fmt.Println("update p:", p, np)
 	isdone = true
